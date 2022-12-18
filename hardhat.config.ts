@@ -29,7 +29,8 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: {
-      default: 0,
+      default: 3,
+      'bsc-testnet': 0
     },
     dev: {
       // Default to 1
@@ -39,10 +40,26 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    pegc: {
-      url: "https://data.pegc.io",
+    bomb: {
+      url: "https://rpc.bombchain.com",
       accounts,
-      chainId: 2325,
+      chainId: 2300,
+      live: true,
+      saveDeployments: true,
+      gasPrice: 10 * 1000000000,
+    },
+    'bomb-testnet': {
+      url: "https://bombchain-testnet.ankr.com/bas_full_rpc_1",
+      accounts,
+      chainId: 2399,
+      live: true,
+      saveDeployments: true,
+      gasPrice: 10 * 1000000000,
+    },
+    bas: {
+      url: "https://rpc.bas.pegchain.io",
+      accounts,
+      chainId: 232323,
       live: true,
       saveDeployments: true,
       gasPrice: 10 * 1000000000,

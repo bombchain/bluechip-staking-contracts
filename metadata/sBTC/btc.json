@@ -1,0 +1,39 @@
+{
+    "name": "Staked Yieldification #77",
+    "description": "Single sided YDF staking certificate of deposit",
+    "image": "https://api.yieldification.com/sydf/eth/image/77.png",
+    "dna": "",
+    "edition": 77,
+    "date": "1659553115000",
+    "attributes": [
+        {
+            "trait_type": "TIER",
+            "value": "shrimp"
+        },
+        {
+            "trait_type": "CREATED",
+            "value": "Aug 3, 2022 18:58 +00:00"
+        },
+        {
+            "trait_type": "TIME_LOCK_EXPIRATION",
+            "value": "Aug 17, 2022 18:58 +00:00"
+        },
+        {
+            "trait_type": "APR",
+            "value": "50"
+        },
+        {
+            "trait_type": "AMOUNT_STAKED",
+            "value": "33,421.471253236867049978"
+        },
+        {
+            "trait_type": "AMOUNT_YDF_EARNING_PER_ANNUM",
+            "value": "16,710.735626618433524989"
+        },
+        {
+            "trait_type": "AMOUNT_TIME_LOCKED_DAYS",
+            "value": "14"
+        }
+    ],
+    "compiler": "YDF NFT Processor"
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Staked Bitcoin",
+    "description": "Single sided BITCOIN staking",
+    "image": "https://bomb.app",
+    "external_link": "https://bomb.app",
+    "seller_fee_basis_points": 0,
+    "fee_recipient": "0x49707808908f0C2450B3F2672E012eDBf49eD808"
+}

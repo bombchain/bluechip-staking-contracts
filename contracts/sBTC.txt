@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+import "./StakingPositions.sol";
+
+contract sBTC is StakingPositions {
+    constructor(
+        address _stakeToken,
+        address _stakeVault,
+        string memory _baseTokenURI
+    )
+        StakingPositions(
+            "Staked BITCOIN",
+            "sBTC",
+            _stakeToken,
+            _stakeVault,
+            _baseTokenURI
+        )
+    {
+        //For testing
+        _addAprLockOption(9000, 5 minutes);
+        _addAprLockOption(9000, 1 hours);
+
+        //   _addAprLockOption(1500, 90 days);
+        //    _addAprLockOption(2000, 180 days);
+        _addAprLockOption(2500, 270 days);
+        _addAprLockOption(3000, 360 days);
+    }
+}
