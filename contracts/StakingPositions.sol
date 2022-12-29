@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity =0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
@@ -54,6 +54,20 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     mapping(uint256 => uint256) public tokenMintedAt;
     mapping(uint256 => uint256) public tokenLastTransferred;
 
+    mapping(address => bool) public hasReceivedBonus;
+
+    uint256 referralBonusAmount = 0.003 ether;
+
+    uint256 referralBonusLockIndex = 1;
+
+    uint256 public capacity;
+
+    uint256 public endTime;
+
+    uint256 public amountStaked;
+
+    uint256 public totalYieldAtMaturity;
+
     modifier onlyOwnerOrVault() {
         require(
             address(vault) == msg.sender ||
@@ -61,6 +75,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
                 owner() == msg.sender,
             "!owner"
         );
+        _;
+    }
+
+    modifier onlyIfNoBonus() {
+        require(!hasReceivedBonus[msg.sender], "Bonus already received");
         _;
     }
 
@@ -87,23 +106,67 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 newLockTime
     );
     event SetTokenBlacklist(uint256 indexed tokenId, bool isBlacklisted);
+    event SetBonusAmount(uint256 indexed bonusAmount);
+    event SetBonusLockIndex(uint256 indexed lockIndex);
+    event ReferralBonusAwarded(
+        address indexed user,
+        uint256 bonusAmount,
+        uint256 bonusLockIndex
+    );
+    event SetCapacity(uint256 indexed capacity);
 
     constructor(
         string memory _name,
         string memory _symbol,
         address _stakeToken,
         address _vault,
-        string memory _baseTokenURI
+        string memory _baseTokenURI,
+        uint256 _capacity,
+        uint256 _endTime
     ) ERC721(_name, _symbol) {
         stakeToken = IERC20(_stakeToken);
         baseTokenURI = _baseTokenURI;
         vault = IStakeVault(_vault);
+        capacity = _capacity;
+        endTime = _endTime;
         //   vault.registerAsset(_stakeToken, address(this));
         //stakeToken.approve(address(vault), type(uint256).max);
     }
 
     function stake(uint256 _amount, uint256 _lockOptIndex) external virtual {
-        _stake(msg.sender, _amount, _lockOptIndex, true, true);
+        _stake(_msgSender(), _amount, _lockOptIndex, true, true);
+    }
+
+    function stakeWithReferral(
+        uint256 _amount,
+        uint256 _lockOptIndex,
+        address _referrer
+    ) external virtual onlyIfNoBonus {
+        _stake(msg.sender, _amount, _lockOptIndex, true, false);
+        _stake(
+            msg.sender,
+            referralBonusAmount,
+            referralBonusLockIndex,
+            false,
+            false
+        );
+        _stake(
+            _referrer,
+            referralBonusAmount,
+            referralBonusLockIndex,
+            false,
+            false
+        );
+        emit ReferralBonusAwarded(
+            msg.sender,
+            referralBonusAmount,
+            referralBonusLockIndex
+        );
+        emit ReferralBonusAwarded(
+            _referrer,
+            referralBonusAmount,
+            referralBonusLockIndex
+        );
     }
 
     function _stake(
@@ -121,11 +184,31 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             _amountStaked > 0,
             "must stake and be earning at least some tokens"
         );
-        if (_transferStakeToken) {
-            vault.deposit(_user, address(stakeToken), _amountStaked);
-        }
+        require(
+            _amountStaked + amountStaked <= capacity || capacity == 0,
+            "Over capacity"
+        );
+        require(
+            block.timestamp <= endTime || endTime == 0,
+            "Stake period over"
+        );
 
+        amountStaked += _amountStaked;
         _ids.increment();
+        uint256 _yieldAtMaturity = (_amountStaked *
+            _aprLockOptions[_lockOptIndex].apr *
+            _aprLockOptions[_lockOptIndex].lockTime) /
+            PERCENT_DENOMENATOR /
+            ONE_YEAR;
+        totalYieldAtMaturity += _yieldAtMaturity;
+        if (_transferStakeToken) {
+            vault._deposit(
+                _user,
+                address(stakeToken),
+                _amountStaked,
+                _yieldAtMaturity
+            );
+        }
         stakes[_ids.current()] = Stake({
             created: block.timestamp,
             amountStaked: _amountStaked,
@@ -133,13 +216,14 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             lockTime: _aprLockOptions[_lockOptIndex].lockTime,
             allowWithdrawEarly: _allowWithdrawEarly
         });
+
         _safeMint(_user, _ids.current());
         tokenMintedAt[_ids.current()] = block.timestamp;
 
         emit CreateStake(_user, _ids.current(), _amountStaked, _lockOptIndex);
     }
 
-    function withdraw(uint256 _tokenId) public {
+    function withdraw(uint256 _tokenId, bool _isEarlyWithdraw) public {
         address _user = msg.sender;
         Stake memory _tokenStake = stakes[_tokenId];
         require(
@@ -156,16 +240,21 @@ contract StakingPositions is ERC721Enumerable, Ownable {
                 _tokenStake.allowWithdrawEarly,
                 "This position is not eligible for early withdraw"
             );
-            stakeToken.transferFrom(
-                address(vault),
+            require(
+                _isEarlyWithdraw,
+                "Must acknowledge the early withdraw due to loss of tokens"
+            );
+            vault._withdraw(
                 _user,
+                address(stakeToken),
                 _tokenStake.amountStaked / 2
             );
+            // todo add early withdraw event and indicate somewhere about the extra tokens
         } else {
             uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
-            stakeToken.transferFrom(
-                address(vault),
+            vault._withdraw(
                 _user,
+                address(stakeToken),
                 _tokenStake.amountStaked + _totalEarnedAmount
             );
         }
@@ -176,9 +265,12 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         emit UnstakeTokens(_user, _tokenId);
     }
 
-    function withdrawEarlyMulti(uint256[] memory _tokenIds) external {
+    function withdrawEarlyMulti(
+        uint256[] memory _tokenIds,
+        bool isWithdrawEarly
+    ) external {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-            withdraw(_tokenIds[i]);
+            withdraw(_tokenIds[i], isWithdrawEarly);
         }
     }
 
@@ -267,8 +359,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         Stake memory _tokenStake = stakes[_tokenId];
         uint256 _secondsStaked = block.timestamp - _tokenStake.created;
         uint256 _secondsRewards;
-        if (_secondsStaked > (_tokenStake.created + _tokenStake.lockTime)) {
-            _secondsRewards = _tokenStake.created + _tokenStake.lockTime;
+        if (_secondsStaked > (_tokenStake.lockTime)) {
+            _secondsRewards = _tokenStake.lockTime;
         } else {
             _secondsRewards = _secondsStaked;
         }
@@ -277,6 +369,37 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             (_tokenStake.amountStaked * _tokenStake.apr * _secondsRewards) /
             PERCENT_DENOMENATOR /
             ONE_YEAR;
+    }
+
+    function getTotalYieldAtMaturity(
+        uint256 _tokenId
+    ) public view returns (uint256) {
+        Stake memory _tokenStake = stakes[_tokenId];
+
+        // uint256 _secondsRewards = _tokenStake.created + _tokenStake.lockTime;
+
+        return
+            (_tokenStake.amountStaked *
+                _tokenStake.apr *
+                _tokenStake.lockTime) /
+            PERCENT_DENOMENATOR /
+            ONE_YEAR;
+    }
+
+    function getTotalValueAtMaturity(
+        uint256 _tokenId
+    ) public view returns (uint256) {
+        Stake memory _tokenStake = stakes[_tokenId];
+
+        //  uint256 _secondsRewards = _tokenStake.created + _tokenStake.lockTime;
+
+        return
+            _tokenStake.amountStaked +
+            ((_tokenStake.amountStaked *
+                _tokenStake.apr *
+                _tokenStake.lockTime) /
+                PERCENT_DENOMENATOR /
+                ONE_YEAR);
     }
 
     function getAllLockOptions() external view returns (AprLock[] memory) {
@@ -316,6 +439,21 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             _apr,
             _lockTime
         );
+    }
+
+    function setBonusAmount(uint256 _bonusAmount) external onlyOwner {
+        referralBonusAmount = _bonusAmount;
+        emit SetBonusAmount(_bonusAmount);
+    }
+
+    function setBonusLockIndex(uint256 _lockIndex) external onlyOwner {
+        referralBonusLockIndex = _lockIndex;
+        emit SetBonusLockIndex(_lockIndex);
+    }
+
+    function setCapacity(uint256 _capacity) external onlyOwner {
+        capacity = _capacity;
+        emit SetCapacity(_capacity);
     }
 
     function setIsBlacklisted(
@@ -372,6 +510,9 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         IERC20 _token,
         address _to
     ) external onlyOwnerOrVault {
-        _token.transfer(_to, _token.balanceOf(address(this)));
+        require(
+            _token.transfer(_to, _token.balanceOf(address(this))),
+            "Could not transfer token"
+        );
     }
 }

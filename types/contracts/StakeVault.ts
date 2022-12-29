@@ -41,12 +41,13 @@ export declare namespace StakeVault {
 
 export interface StakeVaultInterface extends utils.Interface {
   functions: {
+    "_deposit(address,address,uint256,uint256)": FunctionFragment;
+    "_withdraw(address,address,uint256)": FunctionFragment;
     "defaultsAddAprLockOption(uint16,uint256)": FunctionFragment;
     "defaultsGetAllLockOptions()": FunctionFragment;
     "defaultsRemoveAprLockOption(uint256)": FunctionFragment;
     "defaultsUpdateAprLockOption(uint256,uint16,uint256)": FunctionFragment;
     "deployStake(string,string,address,string,uint256,uint256,bool)": FunctionFragment;
-    "deposit(address,address,uint256)": FunctionFragment;
     "governanceRecoverUnsupported(address,address)": FunctionFragment;
     "owner()": FunctionFragment;
     "positionForAsset(address)": FunctionFragment;
@@ -55,17 +56,17 @@ export interface StakeVaultInterface extends utils.Interface {
     "stakePositionId(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateAsset(uint256,uint256,uint256,bool)": FunctionFragment;
-    "withdraw(address,address,uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "_deposit"
+      | "_withdraw"
       | "defaultsAddAprLockOption"
       | "defaultsGetAllLockOptions"
       | "defaultsRemoveAprLockOption"
       | "defaultsUpdateAprLockOption"
       | "deployStake"
-      | "deposit"
       | "governanceRecoverUnsupported"
       | "owner"
       | "positionForAsset"
@@ -74,9 +75,25 @@ export interface StakeVaultInterface extends utils.Interface {
       | "stakePositionId"
       | "transferOwnership"
       | "updateAsset"
-      | "withdraw"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "_deposit",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_withdraw",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
   encodeFunctionData(
     functionFragment: "defaultsAddAprLockOption",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
@@ -107,14 +124,6 @@ export interface StakeVaultInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deposit",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
@@ -151,15 +160,9 @@ export interface StakeVaultInterface extends utils.Interface {
       PromiseOrValue<boolean>
     ]
   ): string;
-  encodeFunctionData(
-    functionFragment: "withdraw",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
 
+  decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "defaultsAddAprLockOption",
     data: BytesLike
@@ -180,7 +183,6 @@ export interface StakeVaultInterface extends utils.Interface {
     functionFragment: "deployStake",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "governanceRecoverUnsupported",
     data: BytesLike
@@ -210,7 +212,6 @@ export interface StakeVaultInterface extends utils.Interface {
     functionFragment: "updateAsset",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "AddDefaultAprLockOption(uint16,uint256)": EventFragment;
@@ -320,6 +321,21 @@ export interface StakeVault extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    _deposit(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     defaultsAddAprLockOption(
       _apr: PromiseOrValue<BigNumberish>,
       _lockTime: PromiseOrValue<BigNumberish>,
@@ -353,13 +369,6 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    deposit(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     governanceRecoverUnsupported(
       _token: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,
@@ -381,12 +390,22 @@ export interface StakeVault extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, BigNumber, BigNumber, BigNumber, BigNumber, boolean] & {
+      [
+        string,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean
+      ] & {
         stakeToken: string;
         positionToken: string;
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
+        yieldAtMaturity: BigNumber;
         endTime: BigNumber;
         active: boolean;
       }
@@ -409,14 +428,22 @@ export interface StakeVault extends BaseContract {
       _active: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    withdraw(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
+
+  _deposit(
+    _user: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _amount: PromiseOrValue<BigNumberish>,
+    _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  _withdraw(
+    _user: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   defaultsAddAprLockOption(
     _apr: PromiseOrValue<BigNumberish>,
@@ -451,13 +478,6 @@ export interface StakeVault extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  deposit(
-    _user: PromiseOrValue<string>,
-    _token: PromiseOrValue<string>,
-    _amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   governanceRecoverUnsupported(
     _token: PromiseOrValue<string>,
     _to: PromiseOrValue<string>,
@@ -479,12 +499,22 @@ export interface StakeVault extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
-    [string, string, BigNumber, BigNumber, BigNumber, BigNumber, boolean] & {
+    [
+      string,
+      string,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      boolean
+    ] & {
       stakeToken: string;
       positionToken: string;
       created: BigNumber;
       capacity: BigNumber;
       stakedAmount: BigNumber;
+      yieldAtMaturity: BigNumber;
       endTime: BigNumber;
       active: boolean;
     }
@@ -508,14 +538,22 @@ export interface StakeVault extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  withdraw(
-    _user: PromiseOrValue<string>,
-    _token: PromiseOrValue<string>,
-    _amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   callStatic: {
+    _deposit(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     defaultsAddAprLockOption(
       _apr: PromiseOrValue<BigNumberish>,
       _lockTime: PromiseOrValue<BigNumberish>,
@@ -549,13 +587,6 @@ export interface StakeVault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    deposit(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     governanceRecoverUnsupported(
       _token: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,
@@ -575,12 +606,22 @@ export interface StakeVault extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, BigNumber, BigNumber, BigNumber, BigNumber, boolean] & {
+      [
+        string,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean
+      ] & {
         stakeToken: string;
         positionToken: string;
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
+        yieldAtMaturity: BigNumber;
         endTime: BigNumber;
         active: boolean;
       }
@@ -601,13 +642,6 @@ export interface StakeVault extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdraw(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -672,6 +706,21 @@ export interface StakeVault extends BaseContract {
   };
 
   estimateGas: {
+    _deposit(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     defaultsAddAprLockOption(
       _apr: PromiseOrValue<BigNumberish>,
       _lockTime: PromiseOrValue<BigNumberish>,
@@ -700,13 +749,6 @@ export interface StakeVault extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    deposit(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -749,16 +791,24 @@ export interface StakeVault extends BaseContract {
       _active: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+  };
 
-    withdraw(
+  populateTransaction: {
+    _deposit(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _withdraw(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
+    ): Promise<PopulatedTransaction>;
 
-  populateTransaction: {
     defaultsAddAprLockOption(
       _apr: PromiseOrValue<BigNumberish>,
       _lockTime: PromiseOrValue<BigNumberish>,
@@ -789,13 +839,6 @@ export interface StakeVault extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deposit(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -836,13 +879,6 @@ export interface StakeVault extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdraw(
-      _user: PromiseOrValue<string>,
-      _token: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

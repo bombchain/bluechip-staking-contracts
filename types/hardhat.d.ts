@@ -13,34 +13,6 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "OwnableUpgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OwnableUpgradeable__factory>;
-    getContractFactory(
-      name: "Initializable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Initializable__factory>;
-    getContractFactory(
-      name: "ReentrancyGuardUpgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ReentrancyGuardUpgradeable__factory>;
-    getContractFactory(
-      name: "ERC20Upgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC20Upgradeable__factory>;
-    getContractFactory(
-      name: "IERC20MetadataUpgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20MetadataUpgradeable__factory>;
-    getContractFactory(
-      name: "IERC20Upgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20Upgradeable__factory>;
-    getContractFactory(
-      name: "ContextUpgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ContextUpgradeable__factory>;
-    getContractFactory(
       name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
@@ -105,41 +77,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.StakingPositions__factory>;
 
-    getContractAt(
-      name: "OwnableUpgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OwnableUpgradeable>;
-    getContractAt(
-      name: "Initializable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Initializable>;
-    getContractAt(
-      name: "ReentrancyGuardUpgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ReentrancyGuardUpgradeable>;
-    getContractAt(
-      name: "ERC20Upgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ERC20Upgradeable>;
-    getContractAt(
-      name: "IERC20MetadataUpgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20MetadataUpgradeable>;
-    getContractAt(
-      name: "IERC20Upgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20Upgradeable>;
-    getContractAt(
-      name: "ContextUpgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ContextUpgradeable>;
     getContractAt(
       name: "Ownable",
       address: string,

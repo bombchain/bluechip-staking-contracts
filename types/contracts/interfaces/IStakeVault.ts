@@ -25,24 +25,16 @@ import type {
 
 export interface IStakeVaultInterface extends utils.Interface {
   functions: {
-    "deposit(address,address,uint256)": FunctionFragment;
-    "registerAsset(address,address,uint256,uint256)": FunctionFragment;
+    "_deposit(address,address,uint256,uint256)": FunctionFragment;
+    "_withdraw(address,address,uint256)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "deposit" | "registerAsset"
+    nameOrSignatureOrTopic: "_deposit" | "_withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "deposit",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "registerAsset",
+    functionFragment: "_deposit",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -50,12 +42,17 @@ export interface IStakeVaultInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "_withdraw",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
 
-  decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "registerAsset",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
 
   events: {};
 }
@@ -87,50 +84,50 @@ export interface IStakeVault extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    deposit(
+    _deposit(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    _withdraw(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    registerAsset(
-      _stakeToken: PromiseOrValue<string>,
-      _stakePosition: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
 
-  deposit(
+  _deposit(
+    _user: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _amount: PromiseOrValue<BigNumberish>,
+    _yieldAtMaturity: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  _withdraw(
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  registerAsset(
-    _stakeToken: PromiseOrValue<string>,
-    _stakePosition: PromiseOrValue<string>,
-    _capacity: PromiseOrValue<BigNumberish>,
-    _endTime: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   callStatic: {
-    deposit(
+    _deposit(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    registerAsset(
-      _stakeToken: PromiseOrValue<string>,
-      _stakePosition: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -138,35 +135,35 @@ export interface IStakeVault extends BaseContract {
   filters: {};
 
   estimateGas: {
-    deposit(
+    _deposit(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    registerAsset(
-      _stakeToken: PromiseOrValue<string>,
-      _stakePosition: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    deposit(
+    _deposit(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    registerAsset(
-      _stakeToken: PromiseOrValue<string>,
-      _stakePosition: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+    _withdraw(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
