@@ -55,7 +55,6 @@ export interface StakingPositionsInterface extends utils.Interface {
     "getAllUserOwned(address)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "getLastMintedTokenId()": FunctionFragment;
-    "getStakeToken()": FunctionFragment;
     "getTotalEarnedAmount(uint256)": FunctionFragment;
     "getTotalValueAtMaturity(uint256)": FunctionFragment;
     "getTotalYieldAtMaturity(uint256)": FunctionFragment;
@@ -95,7 +94,7 @@ export interface StakingPositionsInterface extends utils.Interface {
     "updateAprLockOption(uint256,uint16,uint256)": FunctionFragment;
     "vault()": FunctionFragment;
     "withdraw(uint256,bool)": FunctionFragment;
-    "withdrawEarlyMulti(uint256[],bool)": FunctionFragment;
+    "withdrawMulti(uint256[],bool)": FunctionFragment;
   };
 
   getFunction(
@@ -114,7 +113,6 @@ export interface StakingPositionsInterface extends utils.Interface {
       | "getAllUserOwned"
       | "getApproved"
       | "getLastMintedTokenId"
-      | "getStakeToken"
       | "getTotalEarnedAmount"
       | "getTotalValueAtMaturity"
       | "getTotalYieldAtMaturity"
@@ -154,7 +152,7 @@ export interface StakingPositionsInterface extends utils.Interface {
       | "updateAprLockOption"
       | "vault"
       | "withdraw"
-      | "withdrawEarlyMulti"
+      | "withdrawMulti"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -213,10 +211,6 @@ export interface StakingPositionsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getLastMintedTokenId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getStakeToken",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -385,7 +379,7 @@ export interface StakingPositionsInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawEarlyMulti",
+    functionFragment: "withdrawMulti",
     values: [PromiseOrValue<BigNumberish>[], PromiseOrValue<boolean>]
   ): string;
 
@@ -431,10 +425,6 @@ export interface StakingPositionsInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getLastMintedTokenId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getStakeToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -561,7 +551,7 @@ export interface StakingPositionsInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "vault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawEarlyMulti",
+    functionFragment: "withdrawMulti",
     data: BytesLike
   ): Result;
 
@@ -875,8 +865,6 @@ export interface StakingPositions extends BaseContract {
 
     getLastMintedTokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    getStakeToken(overrides?: CallOverrides): Promise<[string]>;
-
     getTotalEarnedAmount(
       _tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1079,7 +1067,7 @@ export interface StakingPositions extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    withdrawEarlyMulti(
+    withdrawMulti(
       _tokenIds: PromiseOrValue<BigNumberish>[],
       isWithdrawEarly: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1146,8 +1134,6 @@ export interface StakingPositions extends BaseContract {
   ): Promise<string>;
 
   getLastMintedTokenId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getStakeToken(overrides?: CallOverrides): Promise<string>;
 
   getTotalEarnedAmount(
     _tokenId: PromiseOrValue<BigNumberish>,
@@ -1351,7 +1337,7 @@ export interface StakingPositions extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  withdrawEarlyMulti(
+  withdrawMulti(
     _tokenIds: PromiseOrValue<BigNumberish>[],
     isWithdrawEarly: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1418,8 +1404,6 @@ export interface StakingPositions extends BaseContract {
     ): Promise<string>;
 
     getLastMintedTokenId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getStakeToken(overrides?: CallOverrides): Promise<string>;
 
     getTotalEarnedAmount(
       _tokenId: PromiseOrValue<BigNumberish>,
@@ -1621,7 +1605,7 @@ export interface StakingPositions extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdrawEarlyMulti(
+    withdrawMulti(
       _tokenIds: PromiseOrValue<BigNumberish>[],
       isWithdrawEarly: PromiseOrValue<boolean>,
       overrides?: CallOverrides
@@ -1844,8 +1828,6 @@ export interface StakingPositions extends BaseContract {
 
     getLastMintedTokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getStakeToken(overrides?: CallOverrides): Promise<BigNumber>;
-
     getTotalEarnedAmount(
       _tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -2040,7 +2022,7 @@ export interface StakingPositions extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    withdrawEarlyMulti(
+    withdrawMulti(
       _tokenIds: PromiseOrValue<BigNumberish>[],
       isWithdrawEarly: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -2108,8 +2090,6 @@ export interface StakingPositions extends BaseContract {
     getLastMintedTokenId(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    getStakeToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getTotalEarnedAmount(
       _tokenId: PromiseOrValue<BigNumberish>,
@@ -2307,7 +2287,7 @@ export interface StakingPositions extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdrawEarlyMulti(
+    withdrawMulti(
       _tokenIds: PromiseOrValue<BigNumberish>[],
       isWithdrawEarly: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

@@ -58,6 +58,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
 
     uint256 referralBonusAmount = 0.003 ether;
 
+    uint256 referralMinAmount = 0.01 ether;
+
     uint256 referralBonusLockIndex = 1;
 
     uint256 public capacity;
@@ -90,6 +92,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 lockOptionIndex
     );
     event UnstakeTokens(address indexed user, uint256 indexed tokenId);
+
+    event EarlyUnStakeTokens(address indexed user, uint256 indexed tokenId);
     event SetAnnualApr(uint256 indexed newApr);
     event SetBaseTokenURI(string indexed newUri);
     event AddAprLockOption(uint16 indexed apr, uint256 lockTime);
@@ -113,6 +117,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 bonusAmount,
         uint256 bonusLockIndex
     );
+
     event SetCapacity(uint256 indexed capacity);
 
     constructor(
@@ -142,7 +147,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _lockOptIndex,
         address _referrer
     ) external virtual onlyIfNoBonus {
+        require(_amount >= referralMinAmount, "Must stake larger amount");
         _stake(msg.sender, _amount, _lockOptIndex, true, false);
+
+        hasReceivedBonus[_msgSender()] = true;
+
         _stake(
             msg.sender,
             referralBonusAmount,
@@ -157,6 +166,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             false,
             false
         );
+
         emit ReferralBonusAwarded(
             msg.sender,
             referralBonusAmount,
@@ -249,7 +259,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
                 address(stakeToken),
                 _tokenStake.amountStaked / 2
             );
-            // todo add early withdraw event and indicate somewhere about the extra tokens
+            emit EarlyUnStakeTokens(_user, _tokenId);
         } else {
             uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
             vault._withdraw(
@@ -265,7 +275,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         emit UnstakeTokens(_user, _tokenId);
     }
 
-    function withdrawEarlyMulti(
+    function withdrawMulti(
         uint256[] memory _tokenIds,
         bool isWithdrawEarly
     ) external {
@@ -334,9 +344,9 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         return _ids.current();
     }
 
-    function getStakeToken() external view returns (address) {
-        return address(stakeToken);
-    }
+    // function getStakeToken() external view returns (address) {
+    //     return address(stakeToken);
+    // }
 
     function isTokenMinted(uint256 _tokenId) external view returns (bool) {
         return _exists(_tokenId);

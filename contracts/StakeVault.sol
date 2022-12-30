@@ -71,12 +71,6 @@ contract StakeVault is ReentrancyGuard, Ownable {
     );
 
     constructor(address _devAddress) {
-        defaultsAddAprLockOption(9000, 5 minutes);
-        defaultsAddAprLockOption(9000, 1 hours);
-        //   defaultsAddAprLockOption(1500, 90 days);
-        // defaultsAddAprLockOption(2000, 180 days);
-        defaultsAddAprLockOption(2500, 270 days);
-        defaultsAddAprLockOption(3000, 360 days);
         _transferOwnership(_devAddress);
     }
 
@@ -112,10 +106,10 @@ contract StakeVault is ReentrancyGuard, Ownable {
     }
 
     function _addDefaultLocks(StakingPositions _stakePosition) internal {
-        _stakePosition.addAprLockOption(9000, 5 minutes);
-        _stakePosition.addAprLockOption(9000, 1 hours);
-        // _stakePosition.addAprLockOption(1500, 90 days);
-        // _stakePosition.addAprLockOption(2000, 180 days);
+        // _stakePosition.addAprLockOption(9000, 5 minutes);
+        // _stakePosition.addAprLockOption(9000, 1 hours);
+        _stakePosition.addAprLockOption(1500, 90 days);
+        _stakePosition.addAprLockOption(2000, 180 days);
         _stakePosition.addAprLockOption(2500, 270 days);
         _stakePosition.addAprLockOption(3000, 360 days);
     }
@@ -209,58 +203,58 @@ contract StakeVault is ReentrancyGuard, Ownable {
         }
     }
 
-    function defaultsGetAllLockOptions()
-        external
-        view
-        returns (AprLockDefaults[] memory)
-    {
-        return _defaultAprLockOptions;
-    }
+    // function defaultsGetAllLockOptions()
+    //     external
+    //     view
+    //     returns (AprLockDefaults[] memory)
+    // {
+    //     return _defaultAprLockOptions;
+    // }
 
-    function defaultsAddAprLockOption(
-        uint16 _apr,
-        uint256 _lockTime
-    ) public onlyOwner {
-        _defaultsAddAprLockOption(_apr, _lockTime);
-        emit AddDefaultAprLockOption(_apr, _lockTime);
-    }
+    // function defaultsAddAprLockOption(
+    //     uint16 _apr,
+    //     uint256 _lockTime
+    // ) public onlyOwner {
+    //     _defaultsAddAprLockOption(_apr, _lockTime);
+    //     emit AddDefaultAprLockOption(_apr, _lockTime);
+    // }
 
-    function _defaultsAddAprLockOption(
-        uint16 _apr,
-        uint256 _lockTime
-    ) internal {
-        _defaultAprLockOptions.push(
-            AprLockDefaults({apr: _apr, lockTime: _lockTime})
-        );
-    }
+    // function _defaultsAddAprLockOption(
+    //     uint16 _apr,
+    //     uint256 _lockTime
+    // ) internal {
+    //     _defaultAprLockOptions.push(
+    //         AprLockDefaults({apr: _apr, lockTime: _lockTime})
+    //     );
+    // }
 
-    function defaultsRemoveAprLockOption(uint256 _index) external onlyOwner {
-        AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-        _defaultAprLockOptions[_index] = _defaultAprLockOptions[
-            _defaultAprLockOptions.length - 1
-        ];
-        _defaultAprLockOptions.pop();
-        emit RemoveDefaultAprLockOption(_index, _option.apr, _option.lockTime);
-    }
+    // function defaultsRemoveAprLockOption(uint256 _index) external onlyOwner {
+    //     AprLockDefaults memory _option = _defaultAprLockOptions[_index];
+    //     _defaultAprLockOptions[_index] = _defaultAprLockOptions[
+    //         _defaultAprLockOptions.length - 1
+    //     ];
+    //     _defaultAprLockOptions.pop();
+    //     emit RemoveDefaultAprLockOption(_index, _option.apr, _option.lockTime);
+    // }
 
-    function defaultsUpdateAprLockOption(
-        uint256 _index,
-        uint16 _apr,
-        uint256 _lockTime
-    ) external onlyOwner {
-        AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-        _defaultAprLockOptions[_index] = AprLockDefaults({
-            apr: _apr,
-            lockTime: _lockTime
-        });
-        emit UpdateDefaultAprLockOption(
-            _index,
-            _option.apr,
-            _option.lockTime,
-            _apr,
-            _lockTime
-        );
-    }
+    // function defaultsUpdateAprLockOption(
+    //     uint256 _index,
+    //     uint16 _apr,
+    //     uint256 _lockTime
+    // ) external onlyOwner {
+    //     AprLockDefaults memory _option = _defaultAprLockOptions[_index];
+    //     _defaultAprLockOptions[_index] = AprLockDefaults({
+    //         apr: _apr,
+    //         lockTime: _lockTime
+    //     });
+    //     emit UpdateDefaultAprLockOption(
+    //         _index,
+    //         _option.apr,
+    //         _option.lockTime,
+    //         _apr,
+    //         _lockTime
+    //     );
+    // }
 
     function governanceRecoverUnsupported(
         ERC20 _token,
