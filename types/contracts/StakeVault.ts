@@ -27,33 +27,22 @@ import type {
   PromiseOrValue,
 } from "../common";
 
-export declare namespace StakeVault {
-  export type AprLockDefaultsStruct = {
-    apr: PromiseOrValue<BigNumberish>;
-    lockTime: PromiseOrValue<BigNumberish>;
-  };
-
-  export type AprLockDefaultsStructOutput = [number, BigNumber] & {
-    apr: number;
-    lockTime: BigNumber;
-  };
-}
-
 export interface StakeVaultInterface extends utils.Interface {
   functions: {
-    "_deposit(address,address,uint256,uint256)": FunctionFragment;
-    "_withdraw(address,address,uint256)": FunctionFragment;
-    "defaultsAddAprLockOption(uint16,uint256)": FunctionFragment;
-    "defaultsGetAllLockOptions()": FunctionFragment;
-    "defaultsRemoveAprLockOption(uint256)": FunctionFragment;
-    "defaultsUpdateAprLockOption(uint256,uint16,uint256)": FunctionFragment;
+    "_deposit(address,address,uint256)": FunctionFragment;
+    "_withdraw(address,address,uint256,uint256)": FunctionFragment;
+    "deployFunds(uint256,uint256,address)": FunctionFragment;
     "deployStake(string,string,address,string,uint256,uint256,bool)": FunctionFragment;
     "governanceRecoverUnsupported(address,address)": FunctionFragment;
+    "isOperator()": FunctionFragment;
+    "operator()": FunctionFragment;
     "owner()": FunctionFragment;
     "positionForAsset(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
+    "returnDeployedFunds(uint256,uint256,address)": FunctionFragment;
     "stakeAssets(uint256)": FunctionFragment;
     "stakePositionId(address)": FunctionFragment;
+    "transferOperator(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateAsset(uint256,uint256,uint256,bool)": FunctionFragment;
   };
@@ -62,17 +51,18 @@ export interface StakeVaultInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "_deposit"
       | "_withdraw"
-      | "defaultsAddAprLockOption"
-      | "defaultsGetAllLockOptions"
-      | "defaultsRemoveAprLockOption"
-      | "defaultsUpdateAprLockOption"
+      | "deployFunds"
       | "deployStake"
       | "governanceRecoverUnsupported"
+      | "isOperator"
+      | "operator"
       | "owner"
       | "positionForAsset"
       | "renounceOwnership"
+      | "returnDeployedFunds"
       | "stakeAssets"
       | "stakePositionId"
+      | "transferOperator"
       | "transferOwnership"
       | "updateAsset"
   ): FunctionFragment;
@@ -82,7 +72,6 @@ export interface StakeVaultInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -91,27 +80,16 @@ export interface StakeVaultInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "defaultsAddAprLockOption",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "defaultsGetAllLockOptions",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "defaultsRemoveAprLockOption",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "defaultsUpdateAprLockOption",
+    functionFragment: "deployFunds",
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<string>
     ]
   ): string;
   encodeFunctionData(
@@ -130,6 +108,11 @@ export interface StakeVaultInterface extends utils.Interface {
     functionFragment: "governanceRecoverUnsupported",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "isOperator",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "operator", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "positionForAsset",
@@ -140,11 +123,23 @@ export interface StakeVaultInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "returnDeployedFunds",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "stakeAssets",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "stakePositionId",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferOperator",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -164,19 +159,7 @@ export interface StakeVaultInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "defaultsAddAprLockOption",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultsGetAllLockOptions",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultsRemoveAprLockOption",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultsUpdateAprLockOption",
+    functionFragment: "deployFunds",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -187,6 +170,8 @@ export interface StakeVaultInterface extends utils.Interface {
     functionFragment: "governanceRecoverUnsupported",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "operator", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "positionForAsset",
@@ -197,11 +182,19 @@ export interface StakeVaultInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "returnDeployedFunds",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "stakeAssets",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "stakePositionId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOperator",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -214,31 +207,65 @@ export interface StakeVaultInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "AddDefaultAprLockOption(uint16,uint256)": EventFragment;
+    "Deposit(address,uint256)": EventFragment;
+    "FundsDeployed(uint256,uint256)": EventFragment;
+    "FundsReturned(uint256,uint256)": EventFragment;
+    "OperatorTransferred(address,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
-    "RemoveDefaultAprLockOption(uint256,uint16,uint256)": EventFragment;
     "UpdateAssetMetadata(uint256,uint256,uint256,bool)": EventFragment;
-    "UpdateDefaultAprLockOption(uint256,uint16,uint256,uint16,uint256)": EventFragment;
+    "Withdraw(address,uint256)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AddDefaultAprLockOption"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Deposit"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "FundsDeployed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "FundsReturned"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OperatorTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveDefaultAprLockOption"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdateAssetMetadata"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdateDefaultAprLockOption"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
-export interface AddDefaultAprLockOptionEventObject {
-  apr: number;
-  lockTime: BigNumber;
+export interface DepositEventObject {
+  _token: string;
+  _amount: BigNumber;
 }
-export type AddDefaultAprLockOptionEvent = TypedEvent<
-  [number, BigNumber],
-  AddDefaultAprLockOptionEventObject
+export type DepositEvent = TypedEvent<[string, BigNumber], DepositEventObject>;
+
+export type DepositEventFilter = TypedEventFilter<DepositEvent>;
+
+export interface FundsDeployedEventObject {
+  _stakeId: BigNumber;
+  _amount: BigNumber;
+}
+export type FundsDeployedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  FundsDeployedEventObject
 >;
 
-export type AddDefaultAprLockOptionEventFilter =
-  TypedEventFilter<AddDefaultAprLockOptionEvent>;
+export type FundsDeployedEventFilter = TypedEventFilter<FundsDeployedEvent>;
+
+export interface FundsReturnedEventObject {
+  _stakeId: BigNumber;
+  _amount: BigNumber;
+}
+export type FundsReturnedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  FundsReturnedEventObject
+>;
+
+export type FundsReturnedEventFilter = TypedEventFilter<FundsReturnedEvent>;
+
+export interface OperatorTransferredEventObject {
+  previousOperator: string;
+  newOperator: string;
+}
+export type OperatorTransferredEvent = TypedEvent<
+  [string, string],
+  OperatorTransferredEventObject
+>;
+
+export type OperatorTransferredEventFilter =
+  TypedEventFilter<OperatorTransferredEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -251,19 +278,6 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface RemoveDefaultAprLockOptionEventObject {
-  index: BigNumber;
-  apr: number;
-  lockTime: BigNumber;
-}
-export type RemoveDefaultAprLockOptionEvent = TypedEvent<
-  [BigNumber, number, BigNumber],
-  RemoveDefaultAprLockOptionEventObject
->;
-
-export type RemoveDefaultAprLockOptionEventFilter =
-  TypedEventFilter<RemoveDefaultAprLockOptionEvent>;
 
 export interface UpdateAssetMetadataEventObject {
   _stakeId: BigNumber;
@@ -279,20 +293,16 @@ export type UpdateAssetMetadataEvent = TypedEvent<
 export type UpdateAssetMetadataEventFilter =
   TypedEventFilter<UpdateAssetMetadataEvent>;
 
-export interface UpdateDefaultAprLockOptionEventObject {
-  index: BigNumber;
-  oldApr: number;
-  oldLockTime: BigNumber;
-  newApr: number;
-  newLockTime: BigNumber;
+export interface WithdrawEventObject {
+  _token: string;
+  _amount: BigNumber;
 }
-export type UpdateDefaultAprLockOptionEvent = TypedEvent<
-  [BigNumber, number, BigNumber, number, BigNumber],
-  UpdateDefaultAprLockOptionEventObject
+export type WithdrawEvent = TypedEvent<
+  [string, BigNumber],
+  WithdrawEventObject
 >;
 
-export type UpdateDefaultAprLockOptionEventFilter =
-  TypedEventFilter<UpdateDefaultAprLockOptionEvent>;
+export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
 export interface StakeVault extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -325,7 +335,6 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -333,28 +342,14 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    defaultsAddAprLockOption(
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    defaultsGetAllLockOptions(
-      overrides?: CallOverrides
-    ): Promise<[StakeVault.AprLockDefaultsStructOutput[]]>;
-
-    defaultsRemoveAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    defaultsUpdateAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
+    deployFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -375,6 +370,10 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    isOperator(overrides?: CallOverrides): Promise<[boolean]>;
+
+    operator(overrides?: CallOverrides): Promise<[string]>;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     positionForAsset(
@@ -383,6 +382,13 @@ export interface StakeVault extends BaseContract {
     ): Promise<[string]>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    returnDeployedFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _from: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -398,6 +404,7 @@ export interface StakeVault extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
+        BigNumber,
         boolean
       ] & {
         stakeToken: string;
@@ -405,8 +412,9 @@ export interface StakeVault extends BaseContract {
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
-        yieldAtMaturity: BigNumber;
+        yieldEarned: BigNumber;
         endTime: BigNumber;
+        deployedAmount: BigNumber;
         active: boolean;
       }
     >;
@@ -415,6 +423,11 @@ export interface StakeVault extends BaseContract {
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    transferOperator(
+      newOperator_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
@@ -434,7 +447,6 @@ export interface StakeVault extends BaseContract {
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
-    _yieldAtMaturity: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -442,28 +454,14 @@ export interface StakeVault extends BaseContract {
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
+    _yieldEarned: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  defaultsAddAprLockOption(
-    _apr: PromiseOrValue<BigNumberish>,
-    _lockTime: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  defaultsGetAllLockOptions(
-    overrides?: CallOverrides
-  ): Promise<StakeVault.AprLockDefaultsStructOutput[]>;
-
-  defaultsRemoveAprLockOption(
-    _index: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  defaultsUpdateAprLockOption(
-    _index: PromiseOrValue<BigNumberish>,
-    _apr: PromiseOrValue<BigNumberish>,
-    _lockTime: PromiseOrValue<BigNumberish>,
+  deployFunds(
+    _stakeId: PromiseOrValue<BigNumberish>,
+    _amount: PromiseOrValue<BigNumberish>,
+    _to: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -484,6 +482,10 @@ export interface StakeVault extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  isOperator(overrides?: CallOverrides): Promise<boolean>;
+
+  operator(overrides?: CallOverrides): Promise<string>;
+
   owner(overrides?: CallOverrides): Promise<string>;
 
   positionForAsset(
@@ -492,6 +494,13 @@ export interface StakeVault extends BaseContract {
   ): Promise<string>;
 
   renounceOwnership(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  returnDeployedFunds(
+    _stakeId: PromiseOrValue<BigNumberish>,
+    _amount: PromiseOrValue<BigNumberish>,
+    _from: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -507,6 +516,7 @@ export interface StakeVault extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
+      BigNumber,
       boolean
     ] & {
       stakeToken: string;
@@ -514,8 +524,9 @@ export interface StakeVault extends BaseContract {
       created: BigNumber;
       capacity: BigNumber;
       stakedAmount: BigNumber;
-      yieldAtMaturity: BigNumber;
+      yieldEarned: BigNumber;
       endTime: BigNumber;
+      deployedAmount: BigNumber;
       active: boolean;
     }
   >;
@@ -524,6 +535,11 @@ export interface StakeVault extends BaseContract {
     arg0: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  transferOperator(
+    newOperator_: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   transferOwnership(
     newOwner: PromiseOrValue<string>,
@@ -543,7 +559,6 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -551,28 +566,14 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    defaultsAddAprLockOption(
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    defaultsGetAllLockOptions(
-      overrides?: CallOverrides
-    ): Promise<StakeVault.AprLockDefaultsStructOutput[]>;
-
-    defaultsRemoveAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    defaultsUpdateAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
+    deployFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _to: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -593,6 +594,10 @@ export interface StakeVault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    isOperator(overrides?: CallOverrides): Promise<boolean>;
+
+    operator(overrides?: CallOverrides): Promise<string>;
+
     owner(overrides?: CallOverrides): Promise<string>;
 
     positionForAsset(
@@ -601,6 +606,13 @@ export interface StakeVault extends BaseContract {
     ): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
+
+    returnDeployedFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _from: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     stakeAssets(
       arg0: PromiseOrValue<BigNumberish>,
@@ -614,6 +626,7 @@ export interface StakeVault extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
+        BigNumber,
         boolean
       ] & {
         stakeToken: string;
@@ -621,8 +634,9 @@ export interface StakeVault extends BaseContract {
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
-        yieldAtMaturity: BigNumber;
+        yieldEarned: BigNumber;
         endTime: BigNumber;
+        deployedAmount: BigNumber;
         active: boolean;
       }
     >;
@@ -631,6 +645,11 @@ export interface StakeVault extends BaseContract {
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    transferOperator(
+      newOperator_: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
@@ -647,14 +666,41 @@ export interface StakeVault extends BaseContract {
   };
 
   filters: {
-    "AddDefaultAprLockOption(uint16,uint256)"(
-      apr?: PromiseOrValue<BigNumberish> | null,
-      lockTime?: null
-    ): AddDefaultAprLockOptionEventFilter;
-    AddDefaultAprLockOption(
-      apr?: PromiseOrValue<BigNumberish> | null,
-      lockTime?: null
-    ): AddDefaultAprLockOptionEventFilter;
+    "Deposit(address,uint256)"(
+      _token?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): DepositEventFilter;
+    Deposit(
+      _token?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): DepositEventFilter;
+
+    "FundsDeployed(uint256,uint256)"(
+      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _amount?: null
+    ): FundsDeployedEventFilter;
+    FundsDeployed(
+      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _amount?: null
+    ): FundsDeployedEventFilter;
+
+    "FundsReturned(uint256,uint256)"(
+      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _amount?: null
+    ): FundsReturnedEventFilter;
+    FundsReturned(
+      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _amount?: null
+    ): FundsReturnedEventFilter;
+
+    "OperatorTransferred(address,address)"(
+      previousOperator?: PromiseOrValue<string> | null,
+      newOperator?: PromiseOrValue<string> | null
+    ): OperatorTransferredEventFilter;
+    OperatorTransferred(
+      previousOperator?: PromiseOrValue<string> | null,
+      newOperator?: PromiseOrValue<string> | null
+    ): OperatorTransferredEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
@@ -664,17 +710,6 @@ export interface StakeVault extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
-
-    "RemoveDefaultAprLockOption(uint256,uint16,uint256)"(
-      index?: PromiseOrValue<BigNumberish> | null,
-      apr?: PromiseOrValue<BigNumberish> | null,
-      lockTime?: null
-    ): RemoveDefaultAprLockOptionEventFilter;
-    RemoveDefaultAprLockOption(
-      index?: PromiseOrValue<BigNumberish> | null,
-      apr?: PromiseOrValue<BigNumberish> | null,
-      lockTime?: null
-    ): RemoveDefaultAprLockOptionEventFilter;
 
     "UpdateAssetMetadata(uint256,uint256,uint256,bool)"(
       _stakeId?: PromiseOrValue<BigNumberish> | null,
@@ -689,20 +724,14 @@ export interface StakeVault extends BaseContract {
       _active?: null
     ): UpdateAssetMetadataEventFilter;
 
-    "UpdateDefaultAprLockOption(uint256,uint16,uint256,uint16,uint256)"(
-      index?: PromiseOrValue<BigNumberish> | null,
-      oldApr?: PromiseOrValue<BigNumberish> | null,
-      oldLockTime?: null,
-      newApr?: null,
-      newLockTime?: null
-    ): UpdateDefaultAprLockOptionEventFilter;
-    UpdateDefaultAprLockOption(
-      index?: PromiseOrValue<BigNumberish> | null,
-      oldApr?: PromiseOrValue<BigNumberish> | null,
-      oldLockTime?: null,
-      newApr?: null,
-      newLockTime?: null
-    ): UpdateDefaultAprLockOptionEventFilter;
+    "Withdraw(address,uint256)"(
+      _token?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): WithdrawEventFilter;
+    Withdraw(
+      _token?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): WithdrawEventFilter;
   };
 
   estimateGas: {
@@ -710,7 +739,6 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -718,26 +746,14 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    defaultsAddAprLockOption(
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    defaultsGetAllLockOptions(overrides?: CallOverrides): Promise<BigNumber>;
-
-    defaultsRemoveAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    defaultsUpdateAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
+    deployFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -758,6 +774,10 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    isOperator(overrides?: CallOverrides): Promise<BigNumber>;
+
+    operator(overrides?: CallOverrides): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     positionForAsset(
@@ -769,6 +789,13 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    returnDeployedFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _from: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     stakeAssets(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -777,6 +804,11 @@ export interface StakeVault extends BaseContract {
     stakePositionId(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    transferOperator(
+      newOperator_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     transferOwnership(
@@ -798,7 +830,6 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -806,28 +837,14 @@ export interface StakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    defaultsAddAprLockOption(
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    defaultsGetAllLockOptions(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    defaultsRemoveAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    defaultsUpdateAprLockOption(
-      _index: PromiseOrValue<BigNumberish>,
-      _apr: PromiseOrValue<BigNumberish>,
-      _lockTime: PromiseOrValue<BigNumberish>,
+    deployFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -848,6 +865,10 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    isOperator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    operator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     positionForAsset(
@@ -859,6 +880,13 @@ export interface StakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    returnDeployedFunds(
+      _stakeId: PromiseOrValue<BigNumberish>,
+      _amount: PromiseOrValue<BigNumberish>,
+      _from: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     stakeAssets(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -867,6 +895,11 @@ export interface StakeVault extends BaseContract {
     stakePositionId(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    transferOperator(
+      newOperator_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     transferOwnership(

@@ -25,12 +25,13 @@ import type {
 
 export interface IStakeVaultInterface extends utils.Interface {
   functions: {
-    "_deposit(address,address,uint256,uint256)": FunctionFragment;
-    "_withdraw(address,address,uint256)": FunctionFragment;
+    "_deposit(address,address,uint256)": FunctionFragment;
+    "_withdraw(address,address,uint256,uint256)": FunctionFragment;
+    "owner()": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "_deposit" | "_withdraw"
+    nameOrSignatureOrTopic: "_deposit" | "_withdraw" | "owner"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -38,7 +39,6 @@ export interface IStakeVaultInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -47,12 +47,15 @@ export interface IStakeVaultInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
 
   events: {};
 }
@@ -88,7 +91,6 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -96,15 +98,17 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    owner(overrides?: CallOverrides): Promise<[string]>;
   };
 
   _deposit(
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
-    _yieldAtMaturity: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -112,15 +116,17 @@ export interface IStakeVault extends BaseContract {
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
+    _yieldEarned: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  owner(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
     _deposit(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -128,8 +134,11 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    owner(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
@@ -139,7 +148,6 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -147,8 +155,11 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    owner(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -156,7 +167,6 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
-      _yieldAtMaturity: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -164,7 +174,10 @@ export interface IStakeVault extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      _yieldEarned: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

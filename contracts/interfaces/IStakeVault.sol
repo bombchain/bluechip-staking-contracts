@@ -3,12 +3,14 @@
 pragma solidity 0.8.17;
 
 interface IStakeVault {
-    function _deposit(
+    function _deposit(address _user, address _token, uint256 _amount) external;
+
+    function _withdraw(
         address _user,
         address _token,
         uint256 _amount,
-        uint256 _yieldAtMaturity
+        uint256 _yieldEarned
     ) external;
 
-    function _withdraw(address _user, address _token, uint256 _amount) external;
+    function owner() external view returns (address);
 }

@@ -11,7 +11,9 @@ import "./interfaces/IStakingPositions.sol";
 import "./StakingPositions.sol";
 import "./interfaces/IStakeVault.sol";
 
-contract StakeVault is ReentrancyGuard, Ownable {
+import "./owner/Operator.sol";
+
+contract StakeVault is ReentrancyGuard, Operator {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
@@ -21,8 +23,9 @@ contract StakeVault is ReentrancyGuard, Ownable {
         uint256 created;
         uint256 capacity; // set 0 for no limit
         uint256 stakedAmount; // amount already staked
-        uint256 yieldAtMaturity;
+        uint256 yieldEarned;
         uint256 endTime; // set 0 for no end
+        uint256 deployedAmount;
         bool active;
     }
 
@@ -49,20 +52,6 @@ contract StakeVault is ReentrancyGuard, Ownable {
         _;
     }
 
-    event AddDefaultAprLockOption(uint16 indexed apr, uint256 lockTime);
-    event RemoveDefaultAprLockOption(
-        uint256 indexed index,
-        uint16 indexed apr,
-        uint256 lockTime
-    );
-    event UpdateDefaultAprLockOption(
-        uint256 indexed index,
-        uint16 indexed oldApr,
-        uint256 oldLockTime,
-        uint16 newApr,
-        uint256 newLockTime
-    );
-
     event UpdateAssetMetadata(
         uint256 indexed _stakeId,
         uint256 _capacity,
@@ -70,7 +59,16 @@ contract StakeVault is ReentrancyGuard, Ownable {
         bool _active
     );
 
+    event FundsDeployed(uint256 indexed _stakeId, uint256 _amount);
+
+    event FundsReturned(uint256 indexed _stakeId, uint256 _amount);
+
+    event Deposit(address indexed _token, uint256 _amount);
+
+    event Withdraw(address indexed _token, uint256 _amount);
+
     constructor(address _devAddress) {
+        _transferOperator(_devAddress);
         _transferOwnership(_devAddress);
     }
 
@@ -106,44 +104,48 @@ contract StakeVault is ReentrancyGuard, Ownable {
     }
 
     function _addDefaultLocks(StakingPositions _stakePosition) internal {
-        // _stakePosition.addAprLockOption(9000, 5 minutes);
-        // _stakePosition.addAprLockOption(9000, 1 hours);
-        _stakePosition.addAprLockOption(1500, 90 days);
-        _stakePosition.addAprLockOption(2000, 180 days);
-        _stakePosition.addAprLockOption(2500, 270 days);
-        _stakePosition.addAprLockOption(3000, 360 days);
+        _stakePosition.addAprLockOption(920, 90 days);
+        _stakePosition.addAprLockOption(1490, 180 days);
+        _stakePosition.addAprLockOption(2170, 270 days);
+        _stakePosition.addAprLockOption(2980, 360 days);
     }
 
     function _deposit(
         address _user,
         address _token,
-        uint256 _amount,
-        uint256 _yieldAtMaturity
+        uint256 _amount
     ) external onlyPositionOrOwner {
         uint256 stakeId = stakePositionId[_msgSender()];
         StakeAsset storage _stakeAsset = stakeAssets[stakeId];
 
         _stakeAsset.stakedAmount += _amount;
-        _stakeAsset.yieldAtMaturity += _yieldAtMaturity;
+
+        emit Deposit(_token, _amount);
         require(
             ERC20(_token).transferFrom(_user, address(this), _amount),
             "Token could not be transferred"
         );
     }
 
-    // TODO make this secure
     function _withdraw(
         address _user,
         address _token,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _yieldEarned
     ) external onlyPositionOrOwner {
+        uint256 stakeId = stakePositionId[_msgSender()];
+        StakeAsset storage _stakeAsset = stakeAssets[stakeId];
+        require(_stakeAsset.created > 0, "Stake does not exist");
+        _stakeAsset.stakedAmount -= _amount;
+        _stakeAsset.yieldEarned += _yieldEarned;
+
+        emit Withdraw(_token, _amount + _yieldEarned);
         require(
-            ERC20(_token).transfer(_user, _amount),
+            ERC20(_token).transfer(_user, _amount + _yieldEarned),
             "Token could not be transferred"
         );
     }
 
-    // TODO Secure this
     function _registerAsset(
         address _stakeToken,
         address _stakePosition,
@@ -157,8 +159,9 @@ contract StakeVault is ReentrancyGuard, Ownable {
                 created: block.timestamp,
                 capacity: _capacity,
                 stakedAmount: 0,
-                yieldAtMaturity: 0,
+                yieldEarned: 0,
                 endTime: _endTime,
+                deployedAmount: 0,
                 active: true
             })
         );
@@ -173,15 +176,51 @@ contract StakeVault is ReentrancyGuard, Ownable {
         uint256 _endTime,
         bool _active
     ) external onlyOwner {
-        StakeAsset storage stakePosition = stakeAssets[_stakeId];
         require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
-
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
         stakePosition.capacity = _capacity;
         stakePosition.endTime = _endTime;
         stakePosition.active = _active;
 
-        // TODO add event here
         emit UpdateAssetMetadata(_stakeId, _capacity, _endTime, _active);
+    }
+
+    function deployFunds(
+        uint256 _stakeId,
+        uint256 _amount,
+        address _to
+    ) external onlyOwnerOrOperator {
+        require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
+
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
+        stakePosition.deployedAmount += _amount;
+        IERC20 _token = IERC20(stakePosition.stakeToken);
+
+        require(
+            _token.transfer(_to, _amount),
+            "Token could not be transferred"
+        );
+
+        emit FundsDeployed(_stakeId, _amount);
+    }
+
+    function returnDeployedFunds(
+        uint256 _stakeId,
+        uint256 _amount,
+        address _from
+    ) external onlyOwnerOrOperator {
+        require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
+
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
+        IERC20 _token = IERC20(stakePosition.stakeToken);
+        require(
+            _token.transferFrom(_from, address(this), _amount),
+            "Token could not be transferred"
+        );
+
+        stakePosition.deployedAmount -= _amount;
+
+        emit FundsReturned(_stakeId, _amount);
     }
 
     function checkStakeDuplicate(address _token) internal view returns (bool) {
@@ -202,59 +241,6 @@ contract StakeVault is ReentrancyGuard, Ownable {
             );
         }
     }
-
-    // function defaultsGetAllLockOptions()
-    //     external
-    //     view
-    //     returns (AprLockDefaults[] memory)
-    // {
-    //     return _defaultAprLockOptions;
-    // }
-
-    // function defaultsAddAprLockOption(
-    //     uint16 _apr,
-    //     uint256 _lockTime
-    // ) public onlyOwner {
-    //     _defaultsAddAprLockOption(_apr, _lockTime);
-    //     emit AddDefaultAprLockOption(_apr, _lockTime);
-    // }
-
-    // function _defaultsAddAprLockOption(
-    //     uint16 _apr,
-    //     uint256 _lockTime
-    // ) internal {
-    //     _defaultAprLockOptions.push(
-    //         AprLockDefaults({apr: _apr, lockTime: _lockTime})
-    //     );
-    // }
-
-    // function defaultsRemoveAprLockOption(uint256 _index) external onlyOwner {
-    //     AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-    //     _defaultAprLockOptions[_index] = _defaultAprLockOptions[
-    //         _defaultAprLockOptions.length - 1
-    //     ];
-    //     _defaultAprLockOptions.pop();
-    //     emit RemoveDefaultAprLockOption(_index, _option.apr, _option.lockTime);
-    // }
-
-    // function defaultsUpdateAprLockOption(
-    //     uint256 _index,
-    //     uint16 _apr,
-    //     uint256 _lockTime
-    // ) external onlyOwner {
-    //     AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-    //     _defaultAprLockOptions[_index] = AprLockDefaults({
-    //         apr: _apr,
-    //         lockTime: _lockTime
-    //     });
-    //     emit UpdateDefaultAprLockOption(
-    //         _index,
-    //         _option.apr,
-    //         _option.lockTime,
-    //         _apr,
-    //         _lockTime
-    //     );
-    // }
 
     function governanceRecoverUnsupported(
         ERC20 _token,

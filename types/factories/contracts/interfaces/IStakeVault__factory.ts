@@ -27,11 +27,6 @@ const _abi = [
         name: "_amount",
         type: "uint256",
       },
-      {
-        internalType: "uint256",
-        name: "_yieldAtMaturity",
-        type: "uint256",
-      },
     ],
     name: "_deposit",
     outputs: [],
@@ -55,10 +50,28 @@ const _abi = [
         name: "_amount",
         type: "uint256",
       },
+      {
+        internalType: "uint256",
+        name: "_yieldEarned",
+        type: "uint256",
+      },
     ],
     name: "_withdraw",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
 ];

@@ -34,6 +34,8 @@ export type { IStakeVault } from "./contracts/interfaces/IStakeVault";
 export { IStakeVault__factory } from "./factories/contracts/interfaces/IStakeVault__factory";
 export type { IStakingPositions } from "./contracts/interfaces/IStakingPositions";
 export { IStakingPositions__factory } from "./factories/contracts/interfaces/IStakingPositions__factory";
+export type { Operator } from "./contracts/owner/Operator";
+export { Operator__factory } from "./factories/contracts/owner/Operator__factory";
 export type { StakeVault } from "./contracts/StakeVault";
 export { StakeVault__factory } from "./factories/contracts/StakeVault__factory";
 export type { StakingPositions } from "./contracts/StakingPositions";

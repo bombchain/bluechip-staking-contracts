@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./owner/Operator.sol";
 
 import "./interfaces/IStakeVault.sol";
 
-contract StakingPositions is ERC721Enumerable, Ownable {
+contract StakingPositions is ERC721Enumerable, Operator {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
@@ -25,6 +26,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 apr;
         uint256 lockTime;
     }
+
     AprLock[] internal _aprLockOptions;
 
     struct Stake {
@@ -33,14 +35,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 apr;
         uint256 lockTime;
         bool allowWithdrawEarly;
+        bool assetTransferred;
     }
     // tokenId => Stake
     mapping(uint256 => Stake) public stakes;
-    // // tokenId => amount
-    // mapping(uint256 => uint256) public yieldClaimed;
-    // // tokenId => timestamp
-    // mapping(uint256 => uint256) public lastClaim;
-    // tokenId => boolean
+
     mapping(uint256 => bool) public isBlacklisted;
 
     Counters.Counter internal _ids;
@@ -49,9 +48,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     // array of all the NFT token IDs owned by a user
     mapping(address => uint256[]) public allUserOwned;
     // the index in the token ID array at allUserOwned to save gas on operations
+
     mapping(uint256 => uint256) public ownedIndex;
 
     mapping(uint256 => uint256) public tokenMintedAt;
+
     mapping(uint256 => uint256) public tokenLastTransferred;
 
     mapping(address => bool) public hasReceivedBonus;
@@ -69,6 +70,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     uint256 public amountStaked;
 
     uint256 public totalYieldAtMaturity;
+
+    address private _operator;
 
     modifier onlyOwnerOrVault() {
         require(
@@ -89,19 +92,30 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         address indexed user,
         uint256 indexed tokenId,
         uint256 amountStaked,
-        uint256 lockOptionIndex
+        uint256 lockOptionIndex,
+        bool fromCompound
     );
-    event UnstakeTokens(address indexed user, uint256 indexed tokenId);
 
-    event EarlyUnStakeTokens(address indexed user, uint256 indexed tokenId);
+    event UnstakeTokens(
+        address indexed user,
+        uint256 indexed tokenId,
+        bool toCompound,
+        bool earlyUnstake,
+        bool refunded
+    );
+
     event SetAnnualApr(uint256 indexed newApr);
+
     event SetBaseTokenURI(string indexed newUri);
+
     event AddAprLockOption(uint16 indexed apr, uint256 lockTime);
+
     event RemoveAprLockOption(
         uint256 indexed index,
         uint16 indexed apr,
         uint256 lockTime
     );
+
     event UpdateAprLockOption(
         uint256 indexed index,
         uint16 indexed oldApr,
@@ -109,13 +123,25 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 newApr,
         uint256 newLockTime
     );
+
     event SetTokenBlacklist(uint256 indexed tokenId, bool isBlacklisted);
+
     event SetBonusAmount(uint256 indexed bonusAmount);
+
+    event SetBonusMinAmount(uint256 indexed bonusMinAmount);
+
     event SetBonusLockIndex(uint256 indexed lockIndex);
+
     event ReferralBonusAwarded(
         address indexed user,
         uint256 bonusAmount,
         uint256 bonusLockIndex
+    );
+
+    event FreePositionBonus(
+        address indexed user,
+        uint256 amount,
+        uint256 lockIndex
     );
 
     event SetCapacity(uint256 indexed capacity);
@@ -134,12 +160,20 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         vault = IStakeVault(_vault);
         capacity = _capacity;
         endTime = _endTime;
-        //   vault.registerAsset(_stakeToken, address(this));
-        //stakeToken.approve(address(vault), type(uint256).max);
+        _transferOperator(vault.owner());
     }
 
     function stake(uint256 _amount, uint256 _lockOptIndex) external virtual {
-        _stake(_msgSender(), _amount, _lockOptIndex, true, true);
+        _stake(_msgSender(), _amount, _lockOptIndex, true, true, false);
+    }
+
+    function freeStakeBonus(
+        address _user,
+        uint256 _amount,
+        uint256 _lockOptIndex
+    ) external virtual onlyOperator {
+        _stake(_user, _amount, _lockOptIndex, false, false, false);
+        emit FreePositionBonus(_user, _amount, _lockOptIndex);
     }
 
     function stakeWithReferral(
@@ -148,7 +182,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         address _referrer
     ) external virtual onlyIfNoBonus {
         require(_amount >= referralMinAmount, "Must stake larger amount");
-        _stake(msg.sender, _amount, _lockOptIndex, true, false);
+        _stake(msg.sender, _amount, _lockOptIndex, true, false, false);
 
         hasReceivedBonus[_msgSender()] = true;
 
@@ -157,12 +191,14 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             referralBonusAmount,
             referralBonusLockIndex,
             false,
+            false,
             false
         );
         _stake(
             _referrer,
             referralBonusAmount,
             referralBonusLockIndex,
+            false,
             false,
             false
         );
@@ -184,7 +220,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _amountStaked,
         uint256 _lockOptIndex,
         bool _transferStakeToken,
-        bool _allowWithdrawEarly
+        bool _allowWithdrawEarly,
+        bool _fromCompound
     ) internal {
         require(_lockOptIndex < _aprLockOptions.length, "invalid lock option");
         _amountStaked = _amountStaked == 0
@@ -212,25 +249,27 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             ONE_YEAR;
         totalYieldAtMaturity += _yieldAtMaturity;
         if (_transferStakeToken) {
-            vault._deposit(
-                _user,
-                address(stakeToken),
-                _amountStaked,
-                _yieldAtMaturity
-            );
+            vault._deposit(_user, address(stakeToken), _amountStaked);
         }
         stakes[_ids.current()] = Stake({
             created: block.timestamp,
             amountStaked: _amountStaked,
             apr: _aprLockOptions[_lockOptIndex].apr,
             lockTime: _aprLockOptions[_lockOptIndex].lockTime,
-            allowWithdrawEarly: _allowWithdrawEarly
+            allowWithdrawEarly: _allowWithdrawEarly,
+            assetTransferred: _transferStakeToken
         });
 
         _safeMint(_user, _ids.current());
         tokenMintedAt[_ids.current()] = block.timestamp;
 
-        emit CreateStake(_user, _ids.current(), _amountStaked, _lockOptIndex);
+        emit CreateStake(
+            _user,
+            _ids.current(),
+            _amountStaked,
+            _lockOptIndex,
+            _fromCompound
+        );
     }
 
     function withdraw(uint256 _tokenId, bool _isEarlyWithdraw) public {
@@ -243,8 +282,6 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         bool _isUnstakingEarly = block.timestamp <
             _tokenStake.created + _tokenStake.lockTime;
 
-        // send back original tokens staked
-        // if unstaking early based on lock period, only get a portion back
         if (_isUnstakingEarly) {
             require(
                 _tokenStake.allowWithdrawEarly,
@@ -257,22 +294,40 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             vault._withdraw(
                 _user,
                 address(stakeToken),
-                _tokenStake.amountStaked / 2
+                _tokenStake.amountStaked / 2,
+                0
             );
-            emit EarlyUnStakeTokens(_user, _tokenId);
+            emit UnstakeTokens(_user, _tokenId, false, true, false);
         } else {
             uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
             vault._withdraw(
                 _user,
                 address(stakeToken),
-                _tokenStake.amountStaked + _totalEarnedAmount
+                _tokenStake.amountStaked,
+                _totalEarnedAmount
             );
+            emit UnstakeTokens(_user, _tokenId, false, false, false);
         }
 
         // this NFT is useless after the user unstakes
         _burn(_tokenId);
+    }
 
-        emit UnstakeTokens(_user, _tokenId);
+    function adminRefundDeposit(uint256 _tokenId) external onlyOwnerOrOperator {
+        Stake memory _tokenStake = stakes[_tokenId];
+
+        address _user = ownerOf(_tokenId);
+
+        vault._withdraw(
+            _user,
+            address(stakeToken),
+            _tokenStake.amountStaked,
+            0
+        );
+        emit UnstakeTokens(_user, _tokenId, false, false, true);
+
+        // this NFT is useless after the user unstakes
+        _burn(_tokenId);
     }
 
     function withdrawMulti(
@@ -300,12 +355,14 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
 
         _burn(_tokenId);
+        emit UnstakeTokens(_user, _tokenId, true, false, false);
 
         _stake(
             _user,
             _tokenStake.amountStaked + _totalEarnedAmount,
             _lockOptIndex,
             false,
+            true,
             true
         );
     }
@@ -454,6 +511,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     function setBonusAmount(uint256 _bonusAmount) external onlyOwner {
         referralBonusAmount = _bonusAmount;
         emit SetBonusAmount(_bonusAmount);
+    }
+
+    function setBonusMinAmount(uint256 _bonusMinAmount) external onlyOwner {
+        referralMinAmount = _bonusMinAmount;
+        emit SetBonusMinAmount(_bonusMinAmount);
     }
 
     function setBonusLockIndex(uint256 _lockIndex) external onlyOwner {

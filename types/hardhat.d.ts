@@ -69,6 +69,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IStakingPositions__factory>;
     getContractFactory(
+      name: "Operator",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Operator__factory>;
+    getContractFactory(
       name: "StakeVault",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.StakeVault__factory>;
@@ -147,6 +151,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IStakingPositions>;
+    getContractAt(
+      name: "Operator",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Operator>;
     getContractAt(
       name: "StakeVault",
       address: string,

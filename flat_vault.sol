@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
-
-interface IStakeVault {
-    function _deposit(
-        address _user,
-        address _token,
-        uint256 _amount,
-        uint256 _yieldAtMaturity
-    ) external;
-
-    function _withdraw(address _user, address _token, uint256 _amount) external;
-}
-
 // File @openzeppelin/contracts/utils/Context.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
@@ -39,7 +27,9 @@ abstract contract Context {
     }
 }
 
+
 // File @openzeppelin/contracts/access/Ownable.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
 
@@ -60,10 +50,7 @@ pragma solidity ^0.8.0;
 abstract contract Ownable is Context {
     address private _owner;
 
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -110,10 +97,7 @@ abstract contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
         _transferOwnership(newOwner);
     }
 
@@ -128,7 +112,87 @@ abstract contract Ownable is Context {
     }
 }
 
+
+// File contracts/owner/Operator.sol
+
+
+
+pragma solidity 0.8.17;
+
+abstract contract Operator is Ownable {
+    address private _operator;
+
+    event OperatorTransferred(
+        address indexed previousOperator,
+        address indexed newOperator
+    );
+
+    constructor() {
+        _operator = _msgSender();
+        emit OperatorTransferred(address(0), _operator);
+    }
+
+    function operator() public view returns (address) {
+        return _operator;
+    }
+
+    modifier onlyOperator() {
+        require(
+            _operator == _msgSender(),
+            "operator: caller is not the operator"
+        );
+        _;
+    }
+
+    modifier onlyOwnerOrOperator() {
+        require(
+            _operator == _msgSender() || owner() == _msgSender(),
+            "operator: caller is not the operator"
+        );
+        _;
+    }
+
+    function isOperator() public view returns (bool) {
+        return _msgSender() == _operator;
+    }
+
+    function transferOperator(address newOperator_) public onlyOwner {
+        _transferOperator(newOperator_);
+    }
+
+    function _transferOperator(address newOperator_) internal {
+        require(
+            newOperator_ != address(0),
+            "operator: zero address given for new operator"
+        );
+        emit OperatorTransferred(address(0), newOperator_);
+        _operator = newOperator_;
+    }
+}
+
+
+// File contracts/interfaces/IStakeVault.sol
+
+
+
+pragma solidity 0.8.17;
+
+interface IStakeVault {
+    function _deposit(address _user, address _token, uint256 _amount) external;
+
+    function _withdraw(
+        address _user,
+        address _token,
+        uint256 _amount,
+        uint256 _yieldEarned
+    ) external;
+
+    function owner() external view returns (address);
+}
+
+
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
 
@@ -150,11 +214,7 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     /**
      * @dev Returns the amount of tokens in existence.
@@ -182,10 +242,7 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -219,13 +276,17 @@ interface IERC20 {
     ) external returns (bool);
 }
 
+
 // File @openzeppelin/contracts/interfaces/IERC20.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (interfaces/IERC20.sol)
 
 pragma solidity ^0.8.0;
 
+
 // File @openzeppelin/contracts/utils/Counters.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (utils/Counters.sol)
 
@@ -270,7 +331,9 @@ library Counters {
     }
 }
 
+
 // File @openzeppelin/contracts/utils/Address.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)
 
@@ -331,16 +394,10 @@ library Address {
      * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
-        require(
-            address(this).balance >= amount,
-            "Address: insufficient balance"
-        );
+        require(address(this).balance >= amount, "Address: insufficient balance");
 
         (bool success, ) = recipient.call{value: amount}("");
-        require(
-            success,
-            "Address: unable to send value, recipient may have reverted"
-        );
+        require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     /**
@@ -361,10 +418,7 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(
-        address target,
-        bytes memory data
-    ) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
         return functionCall(target, data, "Address: low-level call failed");
     }
 
@@ -398,13 +452,7 @@ library Address {
         bytes memory data,
         uint256 value
     ) internal returns (bytes memory) {
-        return
-            functionCallWithValue(
-                target,
-                data,
-                value,
-                "Address: low-level call with value failed"
-            );
+        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
     /**
@@ -419,15 +467,10 @@ library Address {
         uint256 value,
         string memory errorMessage
     ) internal returns (bytes memory) {
-        require(
-            address(this).balance >= value,
-            "Address: insufficient balance for call"
-        );
+        require(address(this).balance >= value, "Address: insufficient balance for call");
         require(isContract(target), "Address: call to non-contract");
 
-        (bool success, bytes memory returndata) = target.call{value: value}(
-            data
-        );
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
         return verifyCallResult(success, returndata, errorMessage);
     }
 
@@ -437,16 +480,8 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(
-        address target,
-        bytes memory data
-    ) internal view returns (bytes memory) {
-        return
-            functionStaticCall(
-                target,
-                data,
-                "Address: low-level static call failed"
-            );
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        return functionStaticCall(target, data, "Address: low-level static call failed");
     }
 
     /**
@@ -472,16 +507,8 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(
-        address target,
-        bytes memory data
-    ) internal returns (bytes memory) {
-        return
-            functionDelegateCall(
-                target,
-                data,
-                "Address: low-level delegate call failed"
-            );
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
     }
 
     /**
@@ -530,7 +557,9 @@ library Address {
     }
 }
 
+
 // File @openzeppelin/contracts/utils/Strings.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/Strings.sol)
 
@@ -587,10 +616,7 @@ library Strings {
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
-    function toHexString(
-        uint256 value,
-        uint256 length
-    ) internal pure returns (string memory) {
+    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
         bytes memory buffer = new bytes(2 * length + 2);
         buffer[0] = "0";
         buffer[1] = "x";
@@ -610,7 +636,9 @@ library Strings {
     }
 }
 
+
 // File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 
@@ -637,7 +665,9 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/IERC721.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC721/IERC721.sol)
 
@@ -650,29 +680,17 @@ interface IERC721 is IERC165 {
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
      */
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed tokenId
-    );
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     /**
      * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
      */
-    event Approval(
-        address indexed owner,
-        address indexed approved,
-        uint256 indexed tokenId
-    );
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
 
     /**
      * @dev Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
      */
-    event ApprovalForAll(
-        address indexed owner,
-        address indexed operator,
-        bool approved
-    );
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     /**
      * @dev Returns the number of tokens in ``owner``'s account.
@@ -742,7 +760,11 @@ interface IERC721 is IERC165 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 tokenId) external;
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
 
     /**
      * @dev Gives permission to `to` to transfer `tokenId` token to another account.
@@ -778,22 +800,19 @@ interface IERC721 is IERC165 {
      *
      * - `tokenId` must exist.
      */
-    function getApproved(
-        uint256 tokenId
-    ) external view returns (address operator);
+    function getApproved(uint256 tokenId) external view returns (address operator);
 
     /**
      * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
      *
      * See {setApprovalForAll}
      */
-    function isApprovedForAll(
-        address owner,
-        address operator
-    ) external view returns (bool);
+    function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.6.0) (token/ERC721/IERC721Receiver.sol)
 
@@ -822,7 +841,9 @@ interface IERC721Receiver {
     ) external returns (bytes4);
 }
 
+
 // File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
 
@@ -846,14 +867,14 @@ abstract contract ERC165 is IERC165 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IERC165).interfaceId;
     }
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
 
@@ -880,11 +901,19 @@ interface IERC721Metadata is IERC721 {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/ERC721.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC721/ERC721.sol)
 
 pragma solidity ^0.8.0;
+
+
+
+
+
+
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
@@ -924,9 +953,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(IERC721).interfaceId ||
             interfaceId == type(IERC721Metadata).interfaceId ||
@@ -936,22 +963,15 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(
-        address owner
-    ) public view virtual override returns (uint256) {
-        require(
-            owner != address(0),
-            "ERC721: address zero is not a valid owner"
-        );
+    function balanceOf(address owner) public view virtual override returns (uint256) {
+        require(owner != address(0), "ERC721: address zero is not a valid owner");
         return _balances[owner];
     }
 
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(
-        uint256 tokenId
-    ) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         address owner = _owners[tokenId];
         require(owner != address(0), "ERC721: invalid token ID");
         return owner;
@@ -974,16 +994,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
 
         string memory baseURI = _baseURI();
-        return
-            bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
-                : "";
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
     }
 
     /**
@@ -1013,9 +1028,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-getApproved}.
      */
-    function getApproved(
-        uint256 tokenId
-    ) public view virtual override returns (address) {
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
         _requireMinted(tokenId);
 
         return _tokenApprovals[tokenId];
@@ -1024,20 +1037,14 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    ) public virtual override {
+    function setApprovalForAll(address operator, bool approved) public virtual override {
         _setApprovalForAll(_msgSender(), operator, approved);
     }
 
     /**
      * @dev See {IERC721-isApprovedForAll}.
      */
-    function isApprovedForAll(
-        address owner,
-        address operator
-    ) public view virtual override returns (bool) {
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
         return _operatorApprovals[owner][operator];
     }
 
@@ -1050,10 +1057,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         uint256 tokenId
     ) public virtual override {
         //solhint-disable-next-line max-line-length
-        require(
-            _isApprovedOrOwner(_msgSender(), tokenId),
-            "ERC721: caller is not token owner nor approved"
-        );
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner nor approved");
 
         _transfer(from, to, tokenId);
     }
@@ -1078,10 +1082,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         uint256 tokenId,
         bytes memory data
     ) public virtual override {
-        require(
-            _isApprovedOrOwner(_msgSender(), tokenId),
-            "ERC721: caller is not token owner nor approved"
-        );
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner nor approved");
         _safeTransfer(from, to, tokenId, data);
     }
 
@@ -1110,10 +1111,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         bytes memory data
     ) internal virtual {
         _transfer(from, to, tokenId);
-        require(
-            _checkOnERC721Received(from, to, tokenId, data),
-            "ERC721: transfer to non ERC721Receiver implementer"
-        );
+        require(_checkOnERC721Received(from, to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer");
     }
 
     /**
@@ -1135,14 +1133,9 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * - `tokenId` must exist.
      */
-    function _isApprovedOrOwner(
-        address spender,
-        uint256 tokenId
-    ) internal view virtual returns (bool) {
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
         address owner = ERC721.ownerOf(tokenId);
-        return (spender == owner ||
-            isApprovedForAll(owner, spender) ||
-            getApproved(tokenId) == spender);
+        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
     }
 
     /**
@@ -1243,10 +1236,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         address to,
         uint256 tokenId
     ) internal virtual {
-        require(
-            ERC721.ownerOf(tokenId) == from,
-            "ERC721: transfer from incorrect owner"
-        );
+        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
         require(to != address(0), "ERC721: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, tokenId);
@@ -1312,20 +1302,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         bytes memory data
     ) private returns (bool) {
         if (to.isContract()) {
-            try
-                IERC721Receiver(to).onERC721Received(
-                    _msgSender(),
-                    from,
-                    tokenId,
-                    data
-                )
-            returns (bytes4 retval) {
+            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
-                    revert(
-                        "ERC721: transfer to non ERC721Receiver implementer"
-                    );
+                    revert("ERC721: transfer to non ERC721Receiver implementer");
                 } else {
                     /// @solidity memory-safe-assembly
                     assembly {
@@ -1376,7 +1357,9 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     ) internal virtual {}
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC721/extensions/IERC721Enumerable.sol)
 
@@ -1396,10 +1379,7 @@ interface IERC721Enumerable is IERC721 {
      * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
      * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
      */
-    function tokenOfOwnerByIndex(
-        address owner,
-        uint256 index
-    ) external view returns (uint256);
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
 
     /**
      * @dev Returns a token ID at a given `index` of all the tokens stored by the contract.
@@ -1408,11 +1388,14 @@ interface IERC721Enumerable is IERC721 {
     function tokenByIndex(uint256 index) external view returns (uint256);
 }
 
+
 // File @openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/ERC721Enumerable.sol)
 
 pragma solidity ^0.8.0;
+
 
 /**
  * @dev This implements an optional extension of {ERC721} defined in the EIP that adds
@@ -1435,25 +1418,15 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, ERC721) returns (bool) {
-        return
-            interfaceId == type(IERC721Enumerable).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
+        return interfaceId == type(IERC721Enumerable).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
      * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
      */
-    function tokenOfOwnerByIndex(
-        address owner,
-        uint256 index
-    ) public view virtual override returns (uint256) {
-        require(
-            index < ERC721.balanceOf(owner),
-            "ERC721Enumerable: owner index out of bounds"
-        );
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override returns (uint256) {
+        require(index < ERC721.balanceOf(owner), "ERC721Enumerable: owner index out of bounds");
         return _ownedTokens[owner][index];
     }
 
@@ -1467,13 +1440,8 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     /**
      * @dev See {IERC721Enumerable-tokenByIndex}.
      */
-    function tokenByIndex(
-        uint256 index
-    ) public view virtual override returns (uint256) {
-        require(
-            index < ERC721Enumerable.totalSupply(),
-            "ERC721Enumerable: global index out of bounds"
-        );
+    function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
+        require(index < ERC721Enumerable.totalSupply(), "ERC721Enumerable: global index out of bounds");
         return _allTokens[index];
     }
 
@@ -1539,10 +1507,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      * @param from address representing the previous owner of the given token ID
      * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
      */
-    function _removeTokenFromOwnerEnumeration(
-        address from,
-        uint256 tokenId
-    ) private {
+    function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
         // To prevent a gap in from's tokens array, we store the last token in the index of the token to delete, and
         // then delete the last slot (swap and pop).
 
@@ -1588,11 +1553,18 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     }
 }
 
+
 // File contracts/StakingPositions.sol
+
 
 pragma solidity =0.8.17;
 
-contract StakingPositions is ERC721Enumerable, Ownable {
+
+
+
+
+
+contract StakingPositions is ERC721Enumerable, Operator {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
@@ -1608,6 +1580,7 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 apr;
         uint256 lockTime;
     }
+
     AprLock[] internal _aprLockOptions;
 
     struct Stake {
@@ -1616,14 +1589,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 apr;
         uint256 lockTime;
         bool allowWithdrawEarly;
+        bool assetTransferred;
     }
     // tokenId => Stake
     mapping(uint256 => Stake) public stakes;
-    // // tokenId => amount
-    // mapping(uint256 => uint256) public yieldClaimed;
-    // // tokenId => timestamp
-    // mapping(uint256 => uint256) public lastClaim;
-    // tokenId => boolean
+
     mapping(uint256 => bool) public isBlacklisted;
 
     Counters.Counter internal _ids;
@@ -1632,14 +1602,18 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     // array of all the NFT token IDs owned by a user
     mapping(address => uint256[]) public allUserOwned;
     // the index in the token ID array at allUserOwned to save gas on operations
+
     mapping(uint256 => uint256) public ownedIndex;
 
     mapping(uint256 => uint256) public tokenMintedAt;
+
     mapping(uint256 => uint256) public tokenLastTransferred;
 
     mapping(address => bool) public hasReceivedBonus;
 
     uint256 referralBonusAmount = 0.003 ether;
+
+    uint256 referralMinAmount = 0.01 ether;
 
     uint256 referralBonusLockIndex = 1;
 
@@ -1650,6 +1624,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     uint256 public amountStaked;
 
     uint256 public totalYieldAtMaturity;
+
+    address private _operator;
 
     modifier onlyOwnerOrVault() {
         require(
@@ -1670,17 +1646,30 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         address indexed user,
         uint256 indexed tokenId,
         uint256 amountStaked,
-        uint256 lockOptionIndex
+        uint256 lockOptionIndex,
+        bool fromCompound
     );
-    event UnstakeTokens(address indexed user, uint256 indexed tokenId);
+
+    event UnstakeTokens(
+        address indexed user,
+        uint256 indexed tokenId,
+        bool toCompound,
+        bool earlyUnstake,
+        bool refunded
+    );
+
     event SetAnnualApr(uint256 indexed newApr);
+
     event SetBaseTokenURI(string indexed newUri);
+
     event AddAprLockOption(uint16 indexed apr, uint256 lockTime);
+
     event RemoveAprLockOption(
         uint256 indexed index,
         uint16 indexed apr,
         uint256 lockTime
     );
+
     event UpdateAprLockOption(
         uint256 indexed index,
         uint16 indexed oldApr,
@@ -1688,14 +1677,27 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint16 newApr,
         uint256 newLockTime
     );
+
     event SetTokenBlacklist(uint256 indexed tokenId, bool isBlacklisted);
+
     event SetBonusAmount(uint256 indexed bonusAmount);
+
+    event SetBonusMinAmount(uint256 indexed bonusMinAmount);
+
     event SetBonusLockIndex(uint256 indexed lockIndex);
+
     event ReferralBonusAwarded(
         address indexed user,
         uint256 bonusAmount,
         uint256 bonusLockIndex
     );
+
+    event FreePositionBonus(
+        address indexed user,
+        uint256 amount,
+        uint256 lockIndex
+    );
+
     event SetCapacity(uint256 indexed capacity);
 
     constructor(
@@ -1712,12 +1714,20 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         vault = IStakeVault(_vault);
         capacity = _capacity;
         endTime = _endTime;
-        //   vault.registerAsset(_stakeToken, address(this));
-        //stakeToken.approve(address(vault), type(uint256).max);
+        _transferOperator(vault.owner());
     }
 
     function stake(uint256 _amount, uint256 _lockOptIndex) external virtual {
-        _stake(_msgSender(), _amount, _lockOptIndex, true, true);
+        _stake(_msgSender(), _amount, _lockOptIndex, true, true, false);
+    }
+
+    function freeStakeBonus(
+        address _user,
+        uint256 _amount,
+        uint256 _lockOptIndex
+    ) external virtual onlyOperator {
+        _stake(_user, _amount, _lockOptIndex, false, false, false);
+        emit FreePositionBonus(_user, _amount, _lockOptIndex);
     }
 
     function stakeWithReferral(
@@ -1725,11 +1735,16 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _lockOptIndex,
         address _referrer
     ) external virtual onlyIfNoBonus {
-        _stake(msg.sender, _amount, _lockOptIndex, true, false);
+        require(_amount >= referralMinAmount, "Must stake larger amount");
+        _stake(msg.sender, _amount, _lockOptIndex, true, false, false);
+
+        hasReceivedBonus[_msgSender()] = true;
+
         _stake(
             msg.sender,
             referralBonusAmount,
             referralBonusLockIndex,
+            false,
             false,
             false
         );
@@ -1738,8 +1753,10 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             referralBonusAmount,
             referralBonusLockIndex,
             false,
+            false,
             false
         );
+
         emit ReferralBonusAwarded(
             msg.sender,
             referralBonusAmount,
@@ -1757,7 +1774,8 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _amountStaked,
         uint256 _lockOptIndex,
         bool _transferStakeToken,
-        bool _allowWithdrawEarly
+        bool _allowWithdrawEarly,
+        bool _fromCompound
     ) internal {
         require(_lockOptIndex < _aprLockOptions.length, "invalid lock option");
         _amountStaked = _amountStaked == 0
@@ -1785,25 +1803,27 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             ONE_YEAR;
         totalYieldAtMaturity += _yieldAtMaturity;
         if (_transferStakeToken) {
-            vault._deposit(
-                _user,
-                address(stakeToken),
-                _amountStaked,
-                _yieldAtMaturity
-            );
+            vault._deposit(_user, address(stakeToken), _amountStaked);
         }
         stakes[_ids.current()] = Stake({
             created: block.timestamp,
             amountStaked: _amountStaked,
             apr: _aprLockOptions[_lockOptIndex].apr,
             lockTime: _aprLockOptions[_lockOptIndex].lockTime,
-            allowWithdrawEarly: _allowWithdrawEarly
+            allowWithdrawEarly: _allowWithdrawEarly,
+            assetTransferred: _transferStakeToken
         });
 
         _safeMint(_user, _ids.current());
         tokenMintedAt[_ids.current()] = block.timestamp;
 
-        emit CreateStake(_user, _ids.current(), _amountStaked, _lockOptIndex);
+        emit CreateStake(
+            _user,
+            _ids.current(),
+            _amountStaked,
+            _lockOptIndex,
+            _fromCompound
+        );
     }
 
     function withdraw(uint256 _tokenId, bool _isEarlyWithdraw) public {
@@ -1816,8 +1836,6 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         bool _isUnstakingEarly = block.timestamp <
             _tokenStake.created + _tokenStake.lockTime;
 
-        // send back original tokens staked
-        // if unstaking early based on lock period, only get a portion back
         if (_isUnstakingEarly) {
             require(
                 _tokenStake.allowWithdrawEarly,
@@ -1830,22 +1848,40 @@ contract StakingPositions is ERC721Enumerable, Ownable {
             vault._withdraw(
                 _user,
                 address(stakeToken),
-                _tokenStake.amountStaked / 2
+                _tokenStake.amountStaked / 2,
+                0
             );
-            // todo add early withdraw event and indicate somewhere about the extra tokens
+            emit UnstakeTokens(_user, _tokenId, false, true, false);
         } else {
             uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
             vault._withdraw(
                 _user,
                 address(stakeToken),
-                _tokenStake.amountStaked + _totalEarnedAmount
+                _tokenStake.amountStaked,
+                _totalEarnedAmount
             );
+            emit UnstakeTokens(_user, _tokenId, false, false, false);
         }
 
         // this NFT is useless after the user unstakes
         _burn(_tokenId);
+    }
 
-        emit UnstakeTokens(_user, _tokenId);
+    function adminRefundDeposit(uint256 _tokenId) external onlyOwnerOrOperator {
+        Stake memory _tokenStake = stakes[_tokenId];
+
+        address _user = ownerOf(_tokenId);
+
+        vault._withdraw(
+            _user,
+            address(stakeToken),
+            _tokenStake.amountStaked,
+            0
+        );
+        emit UnstakeTokens(_user, _tokenId, false, false, true);
+
+        // this NFT is useless after the user unstakes
+        _burn(_tokenId);
     }
 
     function withdrawMulti(
@@ -1873,12 +1909,14 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
 
         _burn(_tokenId);
+        emit UnstakeTokens(_user, _tokenId, true, false, false);
 
         _stake(
             _user,
             _tokenStake.amountStaked + _totalEarnedAmount,
             _lockOptIndex,
             false,
+            true,
             true
         );
     }
@@ -2029,6 +2067,11 @@ contract StakingPositions is ERC721Enumerable, Ownable {
         emit SetBonusAmount(_bonusAmount);
     }
 
+    function setBonusMinAmount(uint256 _bonusMinAmount) external onlyOwner {
+        referralMinAmount = _bonusMinAmount;
+        emit SetBonusMinAmount(_bonusMinAmount);
+    }
+
     function setBonusLockIndex(uint256 _lockIndex) external onlyOwner {
         referralBonusLockIndex = _lockIndex;
         emit SetBonusLockIndex(_lockIndex);
@@ -2100,7 +2143,10 @@ contract StakingPositions is ERC721Enumerable, Ownable {
     }
 }
 
+
 // File contracts/interfaces/IStakingPositions.sol
+
+
 
 pragma solidity 0.8.17;
 
@@ -2116,7 +2162,9 @@ interface IStakingPositions {
     ) external;
 }
 
+
 // File @openzeppelin/contracts/security/ReentrancyGuard.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (security/ReentrancyGuard.sol)
 
@@ -2181,7 +2229,9 @@ abstract contract ReentrancyGuard {
     }
 }
 
+
 // File @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol@v4.7.3
+
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
@@ -2209,11 +2259,15 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
+
 // File @openzeppelin/contracts/token/ERC20/ERC20.sol@v4.7.3
+
 
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
 
 pragma solidity ^0.8.0;
+
+
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -2306,9 +2360,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(
-        address account
-    ) public view virtual override returns (uint256) {
+    function balanceOf(address account) public view virtual override returns (uint256) {
         return _balances[account];
     }
 
@@ -2320,10 +2372,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(
-        address to,
-        uint256 amount
-    ) public virtual override returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -2332,10 +2381,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(
-        address owner,
-        address spender
-    ) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -2349,10 +2395,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(
-        address spender,
-        uint256 amount
-    ) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
@@ -2397,10 +2440,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(
-        address spender,
-        uint256 addedValue
-    ) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
@@ -2420,16 +2460,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(
-        address spender,
-        uint256 subtractedValue
-    ) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
-        require(
-            currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
-        );
+        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
@@ -2462,10 +2496,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _beforeTokenTransfer(from, to, amount);
 
         uint256 fromBalance = _balances[from];
-        require(
-            fromBalance >= amount,
-            "ERC20: transfer amount exceeds balance"
-        );
+        require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[from] = fromBalance - amount;
         }
@@ -2565,10 +2596,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     ) internal virtual {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
-            require(
-                currentAllowance >= amount,
-                "ERC20: insufficient allowance"
-            );
+            require(currentAllowance >= amount, "ERC20: insufficient allowance");
             unchecked {
                 _approve(owner, spender, currentAllowance - amount);
             }
@@ -2616,11 +2644,17 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     ) internal virtual {}
 }
 
+
 // File contracts/StakeVault.sol
+
 
 pragma solidity =0.8.17;
 
-contract StakeVault is ReentrancyGuard, Ownable {
+
+
+
+
+contract StakeVault is ReentrancyGuard, Operator {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
@@ -2630,8 +2664,9 @@ contract StakeVault is ReentrancyGuard, Ownable {
         uint256 created;
         uint256 capacity; // set 0 for no limit
         uint256 stakedAmount; // amount already staked
-        uint256 yieldAtMaturity;
+        uint256 yieldEarned;
         uint256 endTime; // set 0 for no end
+        uint256 deployedAmount;
         bool active;
     }
 
@@ -2658,20 +2693,6 @@ contract StakeVault is ReentrancyGuard, Ownable {
         _;
     }
 
-    event AddDefaultAprLockOption(uint16 indexed apr, uint256 lockTime);
-    event RemoveDefaultAprLockOption(
-        uint256 indexed index,
-        uint16 indexed apr,
-        uint256 lockTime
-    );
-    event UpdateDefaultAprLockOption(
-        uint256 indexed index,
-        uint16 indexed oldApr,
-        uint256 oldLockTime,
-        uint16 newApr,
-        uint256 newLockTime
-    );
-
     event UpdateAssetMetadata(
         uint256 indexed _stakeId,
         uint256 _capacity,
@@ -2679,13 +2700,16 @@ contract StakeVault is ReentrancyGuard, Ownable {
         bool _active
     );
 
+    event FundsDeployed(uint256 indexed _stakeId, uint256 _amount);
+
+    event FundsReturned(uint256 indexed _stakeId, uint256 _amount);
+
+    event Deposit(address indexed _token, uint256 _amount);
+
+    event Withdraw(address indexed _token, uint256 _amount);
+
     constructor(address _devAddress) {
-        defaultsAddAprLockOption(9000, 5 minutes);
-        defaultsAddAprLockOption(9000, 1 hours);
-        //   defaultsAddAprLockOption(1500, 90 days);
-        // defaultsAddAprLockOption(2000, 180 days);
-        defaultsAddAprLockOption(2500, 270 days);
-        defaultsAddAprLockOption(3000, 360 days);
+        _transferOperator(_devAddress);
         _transferOwnership(_devAddress);
     }
 
@@ -2721,44 +2745,48 @@ contract StakeVault is ReentrancyGuard, Ownable {
     }
 
     function _addDefaultLocks(StakingPositions _stakePosition) internal {
-        _stakePosition.addAprLockOption(9000, 5 minutes);
-        _stakePosition.addAprLockOption(9000, 1 hours);
-        // _stakePosition.addAprLockOption(1500, 90 days);
-        // _stakePosition.addAprLockOption(2000, 180 days);
-        _stakePosition.addAprLockOption(2500, 270 days);
-        _stakePosition.addAprLockOption(3000, 360 days);
+        _stakePosition.addAprLockOption(920, 90 days);
+        _stakePosition.addAprLockOption(1490, 180 days);
+        _stakePosition.addAprLockOption(2170, 270 days);
+        _stakePosition.addAprLockOption(2980, 360 days);
     }
 
     function _deposit(
         address _user,
         address _token,
-        uint256 _amount,
-        uint256 _yieldAtMaturity
+        uint256 _amount
     ) external onlyPositionOrOwner {
         uint256 stakeId = stakePositionId[_msgSender()];
         StakeAsset storage _stakeAsset = stakeAssets[stakeId];
 
         _stakeAsset.stakedAmount += _amount;
-        _stakeAsset.yieldAtMaturity += _yieldAtMaturity;
+
+        emit Deposit(_token, _amount);
         require(
             ERC20(_token).transferFrom(_user, address(this), _amount),
             "Token could not be transferred"
         );
     }
 
-    // TODO make this secure
     function _withdraw(
         address _user,
         address _token,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _yieldEarned
     ) external onlyPositionOrOwner {
+        uint256 stakeId = stakePositionId[_msgSender()];
+        StakeAsset storage _stakeAsset = stakeAssets[stakeId];
+        require(_stakeAsset.created > 0, "Stake does not exist");
+        _stakeAsset.stakedAmount -= _amount;
+        _stakeAsset.yieldEarned += _yieldEarned;
+
+        emit Withdraw(_token, _amount + _yieldEarned);
         require(
-            ERC20(_token).transfer(_user, _amount),
+            ERC20(_token).transfer(_user, _amount + _yieldEarned),
             "Token could not be transferred"
         );
     }
 
-    // TODO Secure this
     function _registerAsset(
         address _stakeToken,
         address _stakePosition,
@@ -2772,8 +2800,9 @@ contract StakeVault is ReentrancyGuard, Ownable {
                 created: block.timestamp,
                 capacity: _capacity,
                 stakedAmount: 0,
-                yieldAtMaturity: 0,
+                yieldEarned: 0,
                 endTime: _endTime,
+                deployedAmount: 0,
                 active: true
             })
         );
@@ -2788,15 +2817,51 @@ contract StakeVault is ReentrancyGuard, Ownable {
         uint256 _endTime,
         bool _active
     ) external onlyOwner {
-        StakeAsset storage stakePosition = stakeAssets[_stakeId];
         require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
-
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
         stakePosition.capacity = _capacity;
         stakePosition.endTime = _endTime;
         stakePosition.active = _active;
 
-        // TODO add event here
         emit UpdateAssetMetadata(_stakeId, _capacity, _endTime, _active);
+    }
+
+    function deployFunds(
+        uint256 _stakeId,
+        uint256 _amount,
+        address _to
+    ) external onlyOwnerOrOperator {
+        require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
+
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
+        stakePosition.deployedAmount += _amount;
+        IERC20 _token = IERC20(stakePosition.stakeToken);
+
+        require(
+            _token.transfer(_to, _amount),
+            "Token could not be transferred"
+        );
+
+        emit FundsDeployed(_stakeId, _amount);
+    }
+
+    function returnDeployedFunds(
+        uint256 _stakeId,
+        uint256 _amount,
+        address _from
+    ) external onlyOwnerOrOperator {
+        require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
+
+        StakeAsset storage stakePosition = stakeAssets[_stakeId];
+        IERC20 _token = IERC20(stakePosition.stakeToken);
+        require(
+            _token.transferFrom(_from, address(this), _amount),
+            "Token could not be transferred"
+        );
+
+        stakePosition.deployedAmount -= _amount;
+
+        emit FundsReturned(_stakeId, _amount);
     }
 
     function checkStakeDuplicate(address _token) internal view returns (bool) {
@@ -2816,59 +2881,6 @@ contract StakeVault is ReentrancyGuard, Ownable {
                 "Could not approve token"
             );
         }
-    }
-
-    function defaultsGetAllLockOptions()
-        external
-        view
-        returns (AprLockDefaults[] memory)
-    {
-        return _defaultAprLockOptions;
-    }
-
-    function defaultsAddAprLockOption(
-        uint16 _apr,
-        uint256 _lockTime
-    ) public onlyOwner {
-        _defaultsAddAprLockOption(_apr, _lockTime);
-        emit AddDefaultAprLockOption(_apr, _lockTime);
-    }
-
-    function _defaultsAddAprLockOption(
-        uint16 _apr,
-        uint256 _lockTime
-    ) internal {
-        _defaultAprLockOptions.push(
-            AprLockDefaults({apr: _apr, lockTime: _lockTime})
-        );
-    }
-
-    function defaultsRemoveAprLockOption(uint256 _index) external onlyOwner {
-        AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-        _defaultAprLockOptions[_index] = _defaultAprLockOptions[
-            _defaultAprLockOptions.length - 1
-        ];
-        _defaultAprLockOptions.pop();
-        emit RemoveDefaultAprLockOption(_index, _option.apr, _option.lockTime);
-    }
-
-    function defaultsUpdateAprLockOption(
-        uint256 _index,
-        uint16 _apr,
-        uint256 _lockTime
-    ) external onlyOwner {
-        AprLockDefaults memory _option = _defaultAprLockOptions[_index];
-        _defaultAprLockOptions[_index] = AprLockDefaults({
-            apr: _apr,
-            lockTime: _lockTime
-        });
-        emit UpdateDefaultAprLockOption(
-            _index,
-            _option.apr,
-            _option.lockTime,
-            _apr,
-            _lockTime
-        );
     }
 
     function governanceRecoverUnsupported(

@@ -2,5 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as interfaces from "./interfaces";
+export * as owner from "./owner";
 export { StakeVault__factory } from "./StakeVault__factory";
 export { StakingPositions__factory } from "./StakingPositions__factory";
