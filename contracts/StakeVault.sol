@@ -167,7 +167,6 @@ contract StakeVault is ReentrancyGuard, Operator {
         );
 
         positionForAsset[_stakeToken] = _stakePosition;
-        stakePositionId[_stakeToken] = stakeAssets.length - 1;
     }
 
     function updateAsset(
