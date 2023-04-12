@@ -1,16 +1,16 @@
-import "dotenv/config"
-import "hardhat-deploy"
-import "hardhat-abi-exporter"
-
+import "dotenv/config";
+import "hardhat-deploy";
+import "hardhat-abi-exporter";
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
-
 const accounts = {
-  mnemonic: process.env.MNEMONIC || "test test test test test test test test test test test junk",
+  mnemonic:
+    process.env.MNEMONIC ||
+    "test test test test test test test test test test test junk",
   // accountsBalance: "990000000000000000000",
-}
+};
 
 const config: HardhatUserConfig = {
   abiExporter: {
@@ -23,6 +23,25 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+
+    customChains: [
+      {
+        network: "bomb",
+        chainId: 2300,
+        urls: {
+          apiURL: "https://bombscan.com/",
+          browserURL: "https://bombscan.com/",
+        },
+      },
+      {
+        network: "bas",
+        chainId: 232323,
+        urls: {
+          apiURL: "https://blockscout.bas.pegchain.io/",
+          browserURL: "https://blockscout.bas.pegchain.io/",
+        },
+      },
+    ],
   },
   mocha: {
     timeout: 20000,
@@ -30,7 +49,8 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 3,
-      'bsc-testnet': 0
+      "bsc-testnet": 0,
+      bsc: 0,
     },
     dev: {
       // Default to 1
@@ -38,20 +58,27 @@ const config: HardhatUserConfig = {
       // dev address mainnet
       // 1: "",
     },
+    admin: {
+      // Default to 1
+      default: "0x49707808908f0C2450B3F2672E012eDBf49eD808",
+      // dev address mainnet
+      // 1: "",
+    },
   },
   networks: {
-    bomb: {
-      url: "https://rpc.bombchain.com",
+    "bomb-testnet": {
+      url: "https://bombchain-testnet.ankr.com/bas_full_rpc_1",
       accounts,
-      chainId: 2300,
+      chainId: 2399,
       live: true,
       saveDeployments: true,
       gasPrice: 10 * 1000000000,
     },
-    'bomb-testnet': {
-      url: "https://bombchain-testnet.ankr.com/bas_full_rpc_1",
+    bomb: {
+      //  url: "https://bombchain-mainnet.ankr.com/bomb_mainnet_full_rpc_1",
+      url: "https://rpc.bombchain.com",
       accounts,
-      chainId: 2399,
+      chainId: 2300,
       live: true,
       saveDeployments: true,
       gasPrice: 10 * 1000000000,
@@ -338,7 +365,34 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        version: "0.8.12",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.8.7",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
         version: "0.7.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.6.12",
         settings: {
           optimizer: {
             enabled: true,

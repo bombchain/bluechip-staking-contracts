@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./interfaces/IStakingPositions.sol";
-import "./StakingPositions.sol";
+import "./interfaces/IStakingPosition.sol";
 import "./interfaces/IStakeVault.sol";
 
 import "./owner/Operator.sol";
 
-contract StakeVault is ReentrancyGuard, Operator {
-    using Counters for Counters.Counter;
-    using Strings for uint256;
+contract StakeVaultV2 is
+    Initializable,
+    PausableUpgradeable,
+    AccessControlEnumerableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    using IERC20Upgradeable for IERC20;
 
     struct StakeAsset {
         address stakeToken;
@@ -34,6 +40,10 @@ contract StakeVault is ReentrancyGuard, Operator {
         uint256 lockTime;
     }
 
+    mapping(address => bool) public allowedMasterContracts;
+
+    mapping(address => address) public masterContractOf;
+
     AprLockDefaults[] internal _defaultAprLockOptions;
 
     StakeAsset[] public stakeAssets;
@@ -42,13 +52,18 @@ contract StakeVault is ReentrancyGuard, Operator {
 
     mapping(address => uint256) public stakePositionId;
 
-    Counters.Counter internal _ids;
+    address public admin;
 
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    // TODO fix these to use access control
     modifier onlyPositionOrOwner() {
-        require(
-            checkIfAddressIsPosition(_msgSender()) || owner() == _msgSender(),
-            "!owner"
-        );
+        require(checkIfAddressIsPosition(_msgSender()), "!owner");
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(checkIfAddressIsPosition(_msgSender()), "!owner");
         _;
     }
 
@@ -67,9 +82,31 @@ contract StakeVault is ReentrancyGuard, Operator {
 
     event Withdraw(address indexed _token, uint256 _amount);
 
-    constructor(address _devAddress) {
-        _transferOperator(_devAddress);
-        _transferOwnership(_devAddress);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _admin) public initializer {
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+        __Pausable_init();
+
+        admin = _admin;
+        _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+
+        _grantRole(OPERATOR_ROLE, _admin);
+    }
+
+    function allowMasterContract(
+        address masterContract,
+        bool approved
+    ) public onlyOwner {
+        // Checks
+        require(masterContract != address(0), "Cannot add contract address 0");
+
+        // Effects
+        allowedMasterContracts[masterContract] = approved;
     }
 
     function deployStake(
@@ -86,24 +123,57 @@ contract StakeVault is ReentrancyGuard, Operator {
             "Stake already exists for this asset, please update it"
         );
 
-        StakingPositions newStake = new StakingPositions(
-            _name,
-            _symbol,
-            _stakeToken,
-            address(this),
-            _baseTokenURI,
-            _capacity,
-            _endTime
-        );
-        _registerAsset(_stakeToken, address(newStake), _capacity, _endTime);
+        // address clone = ClonesUpgradeable.clone(stakeMasterContract);
+        // IStakingPosition(clone).initialize(
+        //     _name,
+        //     _symbol,
+        //     _stakeToken,
+        //     address(this),
+        //     _baseTokenURI,
+        //     _capacity,
+        //     _endTime
+        // );
 
-        if (useDefaultLocks) {
-            _addDefaultLocks(newStake);
-        }
-        newStake.transferOwnership(owner());
+        // _registerAsset(_stakeToken, address(newStake), _capacity, _endTime);
+
+        // if (useDefaultLocks) {
+        //     _addDefaultLocks(newStake);
+        // }
+        // newStake.transferOwnership(admin);
     }
 
-    function _addDefaultLocks(StakingPositions _stakePosition) internal {
+    // function deployStake(
+    //     string memory _name,
+    //     string memory _symbol,
+    //     address _stakeToken,
+    //     string memory _baseTokenURI,
+    //     uint256 _capacity,
+    //     uint256 _endTime,
+    //     bool useDefaultLocks
+    // ) external onlyOwner {
+    //     require(
+    //         !checkStakeDuplicate(_stakeToken),
+    //         "Stake already exists for this asset, please update it"
+    //     );
+
+    //     StakingPositions newStake = new StakingPositions(
+    //         _name,
+    //         _symbol,
+    //         _stakeToken,
+    //         address(this),
+    //         _baseTokenURI,
+    //         _capacity,
+    //         _endTime
+    //     );
+    //     _registerAsset(_stakeToken, address(newStake), _capacity, _endTime);
+
+    //     if (useDefaultLocks) {
+    //         _addDefaultLocks(newStake);
+    //     }
+    //     newStake.transferOwnership(admin);
+    // }
+
+    function _addDefaultLocks(address _stakePosition) internal {
         _stakePosition.addAprLockOption(920, 90 days);
         _stakePosition.addAprLockOption(1490, 180 days);
         _stakePosition.addAprLockOption(2170, 270 days);
@@ -122,7 +192,7 @@ contract StakeVault is ReentrancyGuard, Operator {
 
         emit Deposit(_token, _amount);
         require(
-            ERC20(_token).transferFrom(_user, address(this), _amount),
+            IERC20(_token).transferFrom(_user, address(this), _amount),
             "Token could not be transferred"
         );
     }
@@ -141,7 +211,7 @@ contract StakeVault is ReentrancyGuard, Operator {
 
         emit Withdraw(_token, _amount + _yieldEarned);
         require(
-            ERC20(_token).transfer(_user, _amount + _yieldEarned),
+            IERC20(_token).transfer(_user, _amount + _yieldEarned),
             "Token could not be transferred"
         );
     }
@@ -188,7 +258,7 @@ contract StakeVault is ReentrancyGuard, Operator {
         uint256 _stakeId,
         uint256 _amount,
         address _to
-    ) external onlyOwnerOrOperator {
+    ) external onlyOwner {
         require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
 
         StakeAsset storage stakePosition = stakeAssets[_stakeId];
@@ -207,7 +277,7 @@ contract StakeVault is ReentrancyGuard, Operator {
         uint256 _stakeId,
         uint256 _amount,
         address _from
-    ) external onlyOwnerOrOperator {
+    ) external onlyOwner {
         require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
 
         StakeAsset storage stakePosition = stakeAssets[_stakeId];
@@ -233,16 +303,16 @@ contract StakeVault is ReentrancyGuard, Operator {
     }
 
     function _approveTokenIfNeeded(address token, address spender) private {
-        if (ERC20(token).allowance(address(this), spender) == 0) {
+        if (IERC20(token).allowance(address(this), spender) == 0) {
             require(
-                ERC20(token).approve(spender, type(uint256).max),
+                IERC20(token).approve(spender, type(uint256).max),
                 "Could not approve token"
             );
         }
     }
 
     function governanceRecoverUnsupported(
-        ERC20 _token,
+        IERC20 _token,
         address _to
     ) external onlyOwner {
         require(

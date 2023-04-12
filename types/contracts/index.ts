@@ -5,5 +5,6 @@ import type * as interfaces from "./interfaces";
 export type { interfaces };
 import type * as owner from "./owner";
 export type { owner };
+export type { BombSwapToken } from "./BombSwapToken";
 export type { StakeVault } from "./StakeVault";
 export type { StakingPositions } from "./StakingPositions";

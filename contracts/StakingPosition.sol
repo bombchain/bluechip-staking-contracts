@@ -3,90 +3,23 @@ pragma solidity =0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./owner/Operator.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./interfaces/IStakeVault.sol";
 
-contract StakingPositions is ERC721Enumerable, Operator {
-    using Strings for uint256;
-    using Counters for Counters.Counter;
+contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
+    using StringsUpgradeable for uint256;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    uint256 private constant ONE_YEAR = 365 days;
-    uint256 private constant ONE_WEEK = 7 days;
-    uint16 private constant PERCENT_DENOMENATOR = 10000;
-
-    IERC20 internal stakeToken;
-
-    IStakeVault public vault;
-
-    struct AprLock {
-        uint16 apr;
-        uint256 lockTime;
-    }
-
-    AprLock[] internal _aprLockOptions;
-
-    struct Stake {
-        uint256 created;
-        uint256 amountStaked;
-        uint16 apr;
-        uint256 lockTime;
-        bool allowWithdrawEarly;
-        bool assetTransferred;
-    }
-    // tokenId => Stake
-    mapping(uint256 => Stake) public stakes;
-
-    mapping(uint256 => bool) public isBlacklisted;
-
-    Counters.Counter internal _ids;
-    string private baseTokenURI; // baseTokenURI can point to IPFS folder like https://ipfs.io/ipfs/{cid}/ while
-
-    // array of all the NFT token IDs owned by a user
-    mapping(address => uint256[]) public allUserOwned;
-    // the index in the token ID array at allUserOwned to save gas on operations
-
-    mapping(uint256 => uint256) public ownedIndex;
-
-    mapping(uint256 => uint256) public tokenMintedAt;
-
-    mapping(uint256 => uint256) public tokenLastTransferred;
-
-    mapping(address => bool) public hasReceivedBonus;
-
-    uint256 referralBonusAmount = 0.003 ether;
-
-    uint256 referralMinAmount = 0.01 ether;
-
-    uint256 referralBonusLockIndex = 1;
-
-    uint256 public capacity;
-
-    uint256 public endTime;
-
-    uint256 public amountStaked;
-
-    uint256 public totalYieldAtMaturity;
-
-    address private _operator;
-
-    modifier onlyOwnerOrVault() {
-        require(
-            address(vault) == msg.sender ||
-                // treasury == msg.sender ||
-                owner() == msg.sender,
-            "!owner"
-        );
-        _;
-    }
-
-    modifier onlyIfNoBonus() {
-        require(!hasReceivedBonus[msg.sender], "Bonus already received");
-        _;
-    }
+    // ************** //
+    // *** EVENTS *** //
+    // ************** //
 
     event CreateStake(
         address indexed user,
@@ -146,21 +79,105 @@ contract StakingPositions is ERC721Enumerable, Operator {
 
     event SetCapacity(uint256 indexed capacity);
 
-    constructor(
+    // Immutables (for MasterContract and all clones)
+    IStakeVault public immutable vault;
+    StakingPosition public immutable masterContract;
+
+    // Per clone variables
+    // Clone init settings
+    IERC20 public stakeToken;
+
+    uint256 private constant ONE_YEAR = 365 days;
+    uint256 private constant ONE_WEEK = 7 days;
+    uint16 private constant PERCENT_DENOMENATOR = 10000;
+
+    struct AprLock {
+        uint16 apr;
+        uint256 lockTime;
+    }
+
+    AprLock[] internal _aprLockOptions;
+
+    struct Stake {
+        uint256 created;
+        uint256 amountStaked;
+        uint16 apr;
+        uint256 lockTime;
+        bool allowWithdrawEarly;
+        bool assetTransferred;
+    }
+    // tokenId => Stake
+    mapping(uint256 => Stake) public stakes;
+
+    mapping(uint256 => bool) public isBlacklisted;
+
+    CountersUpgradeable.Counter internal _ids;
+
+    string private baseTokenURI; // baseTokenURI can point to IPFS folder like https://ipfs.io/ipfs/{cid}/ while
+
+    // array of all the NFT token IDs owned by a user
+    mapping(address => uint256[]) public allUserOwned;
+    // the index in the token ID array at allUserOwned to save gas on operations
+
+    mapping(uint256 => uint256) public ownedIndex;
+
+    mapping(uint256 => uint256) public tokenMintedAt;
+
+    mapping(uint256 => uint256) public tokenLastTransferred;
+
+    mapping(address => bool) public hasReceivedBonus;
+
+    uint256 referralBonusAmount = 0.003 ether;
+
+    uint256 referralMinAmount = 0.01 ether;
+
+    uint256 referralBonusLockIndex = 1;
+
+    uint256 public capacity;
+
+    uint256 public endTime;
+
+    uint256 public amountStaked;
+
+    uint256 public totalYieldAtMaturity;
+
+    address private _operator;
+
+    modifier onlyOwnerOrVault() {
+        require(
+            address(vault) == msg.sender ||
+                // treasury == msg.sender ||
+                owner() == msg.sender,
+            "!owner"
+        );
+        _;
+    }
+
+    modifier onlyIfNoBonus() {
+        require(!hasReceivedBonus[msg.sender], "Bonus already received");
+        _;
+    }
+
+    constructor(IStakeVault _stakeVault) ERC721Upgradeable() {
+        vault = _stakeVault;
+        masterContract = this;
+    }
+
+    function initialize(
         string memory _name,
         string memory _symbol,
         address _stakeToken,
-        address _vault,
         string memory _baseTokenURI,
         uint256 _capacity,
         uint256 _endTime
-    ) ERC721(_name, _symbol) {
+    ) public {
+        __ERC721_init(_name, _symbol);
+        __Ownable_init();
+        _transferOwnership(_msgSender());
         stakeToken = IERC20(_stakeToken);
         baseTokenURI = _baseTokenURI;
-        vault = IStakeVault(_vault);
         capacity = _capacity;
         endTime = _endTime;
-        _transferOperator(vault.owner());
     }
 
     function stake(uint256 _amount, uint256 _lockOptIndex) external virtual {
@@ -171,7 +188,7 @@ contract StakingPositions is ERC721Enumerable, Operator {
         address _user,
         uint256 _amount,
         uint256 _lockOptIndex
-    ) external virtual onlyOperator {
+    ) external virtual onlyOwner {
         _stake(_user, _amount, _lockOptIndex, false, false, false);
         emit FreePositionBonus(_user, _amount, _lockOptIndex);
     }
@@ -313,7 +330,7 @@ contract StakingPositions is ERC721Enumerable, Operator {
         _burn(_tokenId);
     }
 
-    function adminRefundDeposit(uint256 _tokenId) external onlyOwnerOrOperator {
+    function adminRefundDeposit(uint256 _tokenId) external onlyOwner {
         Stake memory _tokenStake = stakes[_tokenId];
 
         address _user = ownerOf(_tokenId);
@@ -393,7 +410,7 @@ contract StakingPositions is ERC721Enumerable, Operator {
     // Override supportsInterface - See {IERC165-supportsInterface}
     function supportsInterface(
         bytes4 _interfaceId
-    ) public view virtual override(ERC721Enumerable) returns (bool) {
+    ) public view virtual override(ERC721EnumerableUpgradeable) returns (bool) {
         return super.supportsInterface(_interfaceId);
     }
 
@@ -543,19 +560,21 @@ contract StakingPositions is ERC721Enumerable, Operator {
     function _beforeTokenTransfer(
         address _from,
         address _to,
-        uint256 _tokenId
-    ) internal virtual override(ERC721Enumerable) {
+        uint256 _tokenId,
+        uint256 _batchSize
+    ) internal virtual override(ERC721EnumerableUpgradeable) {
         require(!isBlacklisted[_tokenId], "blacklisted NFT");
         tokenLastTransferred[_tokenId] = block.timestamp;
 
-        super._beforeTokenTransfer(_from, _to, _tokenId);
+        super._beforeTokenTransfer(_from, _to, _tokenId, _batchSize);
     }
 
     function _afterTokenTransfer(
         address _from,
         address _to,
-        uint256 _tokenId
-    ) internal virtual override(ERC721) {
+        uint256 _tokenId,
+        uint256 _batchSize
+    ) internal virtual override(ERC721Upgradeable) {
         // if from == address(0), token is being minted
         if (_from != address(0)) {
             uint256 _currIndex = ownedIndex[_tokenId];
@@ -575,7 +594,7 @@ contract StakingPositions is ERC721Enumerable, Operator {
             allUserOwned[_to].push(_tokenId);
         }
 
-        super._afterTokenTransfer(_from, _to, _tokenId);
+        super._afterTokenTransfer(_from, _to, _tokenId, _batchSize);
     }
 
     function governanceRecoverUnsupported(
