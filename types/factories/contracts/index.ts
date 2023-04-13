@@ -4,5 +4,5 @@
 export * as interfaces from "./interfaces";
 export * as owner from "./owner";
 export { BombSwapToken__factory } from "./BombSwapToken__factory";
-export { StakeVault__factory } from "./StakeVault__factory";
-export { StakingPositions__factory } from "./StakingPositions__factory";
+export { StakeVaultV2__factory } from "./StakeVaultV2__factory";
+export { StakingPosition__factory } from "./StakingPosition__factory";

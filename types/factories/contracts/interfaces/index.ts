@@ -2,4 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IStakeVault__factory } from "./IStakeVault__factory";
-export { IStakingPositions__factory } from "./IStakingPositions__factory";
+export { IStakingPosition__factory } from "./IStakingPosition__factory";
+export { IWETH__factory } from "./IWETH__factory";

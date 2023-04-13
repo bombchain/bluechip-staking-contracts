@@ -2,4 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IStakeVault } from "./IStakeVault";
-export type { IStakingPositions } from "./IStakingPositions";
+export type { IStakingPosition } from "./IStakingPosition";
+export type { IWETH } from "./IWETH";
