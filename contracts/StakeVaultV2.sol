@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.17;
+pragma solidity >=0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
@@ -178,10 +178,10 @@ contract StakeVaultV2 is
     // }
 
     function _addDefaultLocks(address _stakePosition) internal {
-        //    _stakePosition.addAprLockOption(920, 90 days);
-        ///    _stakePosition.addAprLockOption(1490, 180 days);
-        //    _stakePosition.addAprLockOption(2170, 270 days);
-        //    _stakePosition.addAprLockOption(2980, 360 days);
+        // _stakePosition.addAprLockOption(920, 90 days);
+        // _stakePosition.addAprLockOption(1490, 180 days);
+        // _stakePosition.addAprLockOption(2170, 270 days);
+        // _stakePosition.addAprLockOption(2980, 360 days);
     }
 
     function _deposit(
