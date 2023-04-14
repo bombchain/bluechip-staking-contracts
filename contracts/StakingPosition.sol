@@ -159,6 +159,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     }
 
     constructor(IStakeVault _stakeVault) ERC721Upgradeable() {
+        _disableInitializers();
         vault = _stakeVault;
         masterContract = this;
     }
@@ -173,7 +174,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     ) public {
         __ERC721_init(_name, _symbol);
         __Ownable_init();
-        _transferOwnership(_msgSender());
+        _transferOwnership(address(vault));
         stakeToken = IERC20(_stakeToken);
         baseTokenURI = _baseTokenURI;
         capacity = _capacity;

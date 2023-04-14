@@ -21,11 +21,9 @@ contract StakeVaultV2 is
     AccessControlEnumerableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    using IERC20Upgradeable for IERC20;
+    // using IERC20Upgradeable for IERC20;
 
     struct StakeAsset {
-        address stakeToken;
-        address positionToken;
         uint256 created;
         uint256 capacity; // set 0 for no limit
         uint256 stakedAmount; // amount already staked
@@ -45,6 +43,9 @@ contract StakeVaultV2 is
     mapping(address => address) public masterContractOf;
 
     AprLockDefaults[] internal _defaultAprLockOptions;
+
+    mapping(IERC20 => IStakingPosition) public stakePosition;
+    mapping(IERC20 => StakeAsset) public stakePositionData;
 
     StakeAsset[] public stakeAssets;
 
@@ -68,7 +69,7 @@ contract StakeVaultV2 is
     }
 
     event UpdateAssetMetadata(
-        uint256 indexed _stakeId,
+        IERC20 indexed _stakeToken,
         uint256 _capacity,
         uint256 _endTime,
         bool _active
@@ -91,10 +92,8 @@ contract StakeVaultV2 is
         __AccessControl_init();
         __ReentrancyGuard_init();
         __Pausable_init();
-
         admin = _admin;
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
-
         _grantRole(OPERATOR_ROLE, _admin);
     }
 
@@ -110,6 +109,7 @@ contract StakeVaultV2 is
     }
 
     function deployStake(
+        address _masterContract,
         string memory _name,
         string memory _symbol,
         address _stakeToken,
@@ -123,18 +123,22 @@ contract StakeVaultV2 is
             "Stake already exists for this asset, please update it"
         );
 
-        // address clone = ClonesUpgradeable.clone(stakeMasterContract);
-        // IStakingPosition(clone).initialize(
-        //     _name,
-        //     _symbol,
-        //     _stakeToken,
-        //     address(this),
-        //     _baseTokenURI,
-        //     _capacity,
-        //     _endTime
-        // );
+        address clone = ClonesUpgradeable.clone(_masterContract);
+        IStakingPosition(clone).initialize(
+            _name,
+            _symbol,
+            _stakeToken,
+            _baseTokenURI,
+            _capacity,
+            _endTime
+        );
 
-        // _registerAsset(_stakeToken, address(newStake), _capacity, _endTime);
+        _registerAsset(
+            IERC20(_stakeToken),
+            address(clone),
+            _capacity,
+            _endTime
+        );
 
         // if (useDefaultLocks) {
         //     _addDefaultLocks(newStake);
@@ -174,10 +178,10 @@ contract StakeVaultV2 is
     // }
 
     function _addDefaultLocks(address _stakePosition) internal {
-        _stakePosition.addAprLockOption(920, 90 days);
-        _stakePosition.addAprLockOption(1490, 180 days);
-        _stakePosition.addAprLockOption(2170, 270 days);
-        _stakePosition.addAprLockOption(2980, 360 days);
+        //    _stakePosition.addAprLockOption(920, 90 days);
+        ///    _stakePosition.addAprLockOption(1490, 180 days);
+        //    _stakePosition.addAprLockOption(2170, 270 days);
+        //    _stakePosition.addAprLockOption(2980, 360 days);
     }
 
     function _deposit(
@@ -217,15 +221,13 @@ contract StakeVaultV2 is
     }
 
     function _registerAsset(
-        address _stakeToken,
+        IERC20 _stakeToken,
         address _stakePosition,
         uint256 _capacity,
         uint256 _endTime
     ) internal {
-        stakeAssets.push(
+        stakePositionData[_stakeToken] = (
             StakeAsset({
-                stakeToken: _stakeToken,
-                positionToken: _stakePosition,
                 created: block.timestamp,
                 capacity: _capacity,
                 stakedAmount: 0,
@@ -236,22 +238,25 @@ contract StakeVaultV2 is
             })
         );
 
-        positionForAsset[_stakeToken] = _stakePosition;
+        stakePosition[_stakeToken] = IStakingPosition(_stakePosition);
     }
 
     function updateAsset(
-        uint256 _stakeId,
+        IERC20 _stakeToken,
         uint256 _capacity,
         uint256 _endTime,
         bool _active
     ) external onlyOwner {
-        require(stakeAssets[_stakeId].created > 0, "Stake does not exist");
-        StakeAsset storage stakePosition = stakeAssets[_stakeId];
-        stakePosition.capacity = _capacity;
-        stakePosition.endTime = _endTime;
-        stakePosition.active = _active;
+        require(
+            stakePositionData[_stakeToken].created > 0,
+            "Stake does not exist"
+        );
+        StakeAsset storage _stakePosition = stakePositionData[_stakeToken];
+        _stakePosition.capacity = _capacity;
+        _stakePosition.endTime = _endTime;
+        _stakePosition.active = _active;
 
-        emit UpdateAssetMetadata(_stakeId, _capacity, _endTime, _active);
+        emit UpdateAssetMetadata(_stakeToken, _capacity, _endTime, _active);
     }
 
     function deployFunds(
