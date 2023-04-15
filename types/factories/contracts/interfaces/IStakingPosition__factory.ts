@@ -44,6 +44,44 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "_name",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "_symbol",
+        type: "string",
+      },
+      {
+        internalType: "address",
+        name: "_stakeToken",
+        type: "address",
+      },
+      {
+        internalType: "string",
+        name: "_baseTokenURI",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "_capacity",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_endTime",
+        type: "uint256",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "_user",
         type: "address",

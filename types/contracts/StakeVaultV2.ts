@@ -34,10 +34,11 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "_deposit(address,address,uint256)": FunctionFragment;
     "_withdraw(address,address,uint256,uint256)": FunctionFragment;
     "admin()": FunctionFragment;
+    "allStakePositions(address)": FunctionFragment;
     "allowMasterContract(address,bool)": FunctionFragment;
     "allowedMasterContracts(address)": FunctionFragment;
-    "deployFunds(uint256,uint256,address)": FunctionFragment;
-    "deployStake(string,string,address,string,uint256,uint256,bool)": FunctionFragment;
+    "deployFunds(address,uint256,address)": FunctionFragment;
+    "deployStake(address,string,string,address,string,uint256,uint256,bool)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "getRoleMember(bytes32,uint256)": FunctionFragment;
     "getRoleMemberCount(bytes32)": FunctionFragment;
@@ -47,14 +48,13 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "initialize(address)": FunctionFragment;
     "masterContractOf(address)": FunctionFragment;
     "paused()": FunctionFragment;
-    "positionForAsset(address)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
-    "returnDeployedFunds(uint256,uint256,address)": FunctionFragment;
+    "returnDeployedFunds(address,uint256,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
-    "stakeAssets(uint256)": FunctionFragment;
-    "stakePositionId(address)": FunctionFragment;
+    "stakePosition(address)": FunctionFragment;
+    "stakePositionData(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "updateAsset(uint256,uint256,uint256,bool)": FunctionFragment;
+    "updateAsset(address,uint256,uint256,bool)": FunctionFragment;
   };
 
   getFunction(
@@ -64,6 +64,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
       | "_deposit"
       | "_withdraw"
       | "admin"
+      | "allStakePositions"
       | "allowMasterContract"
       | "allowedMasterContracts"
       | "deployFunds"
@@ -77,12 +78,11 @@ export interface StakeVaultV2Interface extends utils.Interface {
       | "initialize"
       | "masterContractOf"
       | "paused"
-      | "positionForAsset"
       | "renounceRole"
       | "returnDeployedFunds"
       | "revokeRole"
-      | "stakeAssets"
-      | "stakePositionId"
+      | "stakePosition"
+      | "stakePositionData"
       | "supportsInterface"
       | "updateAsset"
   ): FunctionFragment;
@@ -114,6 +114,10 @@ export interface StakeVaultV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "admin", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "allStakePositions",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "allowMasterContract",
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
   ): string;
@@ -124,7 +128,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "deployFunds",
     values: [
-      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>
     ]
@@ -132,6 +136,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "deployStake",
     values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -175,17 +180,13 @@ export interface StakeVaultV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "positionForAsset",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "renounceRole",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "returnDeployedFunds",
     values: [
-      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>
     ]
@@ -195,11 +196,11 @@ export interface StakeVaultV2Interface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "stakeAssets",
-    values: [PromiseOrValue<BigNumberish>]
+    functionFragment: "stakePosition",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "stakePositionId",
+    functionFragment: "stakePositionData",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -209,7 +210,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "updateAsset",
     values: [
-      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>
@@ -227,6 +228,10 @@ export interface StakeVaultV2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "allStakePositions",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "allowMasterContract",
     data: BytesLike
@@ -268,10 +273,6 @@ export interface StakeVaultV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "positionForAsset",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "renounceRole",
     data: BytesLike
   ): Result;
@@ -281,11 +282,11 @@ export interface StakeVaultV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "stakeAssets",
+    functionFragment: "stakePosition",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "stakePositionId",
+    functionFragment: "stakePositionData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -299,15 +300,15 @@ export interface StakeVaultV2Interface extends utils.Interface {
 
   events: {
     "Deposit(address,uint256)": EventFragment;
-    "FundsDeployed(uint256,uint256)": EventFragment;
-    "FundsReturned(uint256,uint256)": EventFragment;
+    "FundsDeployed(address,address,uint256)": EventFragment;
+    "FundsReturned(address,address,uint256)": EventFragment;
     "Initialized(uint8)": EventFragment;
     "Paused(address)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
     "Unpaused(address)": EventFragment;
-    "UpdateAssetMetadata(uint256,uint256,uint256,bool)": EventFragment;
+    "UpdateAssetMetadata(address,uint256,uint256,bool)": EventFragment;
     "Withdraw(address,uint256)": EventFragment;
   };
 
@@ -333,22 +334,24 @@ export type DepositEvent = TypedEvent<[string, BigNumber], DepositEventObject>;
 export type DepositEventFilter = TypedEventFilter<DepositEvent>;
 
 export interface FundsDeployedEventObject {
-  _stakeId: BigNumber;
+  _stakeToken: string;
+  _user: string;
   _amount: BigNumber;
 }
 export type FundsDeployedEvent = TypedEvent<
-  [BigNumber, BigNumber],
+  [string, string, BigNumber],
   FundsDeployedEventObject
 >;
 
 export type FundsDeployedEventFilter = TypedEventFilter<FundsDeployedEvent>;
 
 export interface FundsReturnedEventObject {
-  _stakeId: BigNumber;
+  _stakeToken: string;
+  _user: string;
   _amount: BigNumber;
 }
 export type FundsReturnedEvent = TypedEvent<
-  [BigNumber, BigNumber],
+  [string, string, BigNumber],
   FundsReturnedEventObject
 >;
 
@@ -413,13 +416,13 @@ export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
 export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface UpdateAssetMetadataEventObject {
-  _stakeId: BigNumber;
+  _stakeToken: string;
   _capacity: BigNumber;
   _endTime: BigNumber;
   _active: boolean;
 }
 export type UpdateAssetMetadataEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, boolean],
+  [string, BigNumber, BigNumber, boolean],
   UpdateAssetMetadataEventObject
 >;
 
@@ -485,6 +488,11 @@ export interface StakeVaultV2 extends BaseContract {
 
     admin(overrides?: CallOverrides): Promise<[string]>;
 
+    allStakePositions(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     allowMasterContract(
       masterContract: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
@@ -497,13 +505,14 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<[boolean]>;
 
     deployFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     deployStake(
+      _masterContract: PromiseOrValue<string>,
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
@@ -560,11 +569,6 @@ export interface StakeVaultV2 extends BaseContract {
 
     paused(overrides?: CallOverrides): Promise<[boolean]>;
 
-    positionForAsset(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
     renounceRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -572,7 +576,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     returnDeployedFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _from: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -584,13 +588,16 @@ export interface StakeVaultV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    stakeAssets(
-      arg0: PromiseOrValue<BigNumberish>,
+    stakePosition(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<
       [
-        string,
-        string,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -599,8 +606,6 @@ export interface StakeVaultV2 extends BaseContract {
         BigNumber,
         boolean
       ] & {
-        stakeToken: string;
-        positionToken: string;
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
@@ -611,18 +616,13 @@ export interface StakeVaultV2 extends BaseContract {
       }
     >;
 
-    stakePositionId(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     updateAsset(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
@@ -651,6 +651,11 @@ export interface StakeVaultV2 extends BaseContract {
 
   admin(overrides?: CallOverrides): Promise<string>;
 
+  allStakePositions(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   allowMasterContract(
     masterContract: PromiseOrValue<string>,
     approved: PromiseOrValue<boolean>,
@@ -663,13 +668,14 @@ export interface StakeVaultV2 extends BaseContract {
   ): Promise<boolean>;
 
   deployFunds(
-    _stakeId: PromiseOrValue<BigNumberish>,
+    _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
     _to: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   deployStake(
+    _masterContract: PromiseOrValue<string>,
     _name: PromiseOrValue<string>,
     _symbol: PromiseOrValue<string>,
     _stakeToken: PromiseOrValue<string>,
@@ -726,11 +732,6 @@ export interface StakeVaultV2 extends BaseContract {
 
   paused(overrides?: CallOverrides): Promise<boolean>;
 
-  positionForAsset(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
   renounceRole(
     role: PromiseOrValue<BytesLike>,
     account: PromiseOrValue<string>,
@@ -738,7 +739,7 @@ export interface StakeVaultV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   returnDeployedFunds(
-    _stakeId: PromiseOrValue<BigNumberish>,
+    _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
     _from: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -750,13 +751,16 @@ export interface StakeVaultV2 extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  stakeAssets(
-    arg0: PromiseOrValue<BigNumberish>,
+  stakePosition(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
+  stakePositionData(
+    arg0: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<
     [
-      string,
-      string,
       BigNumber,
       BigNumber,
       BigNumber,
@@ -765,8 +769,6 @@ export interface StakeVaultV2 extends BaseContract {
       BigNumber,
       boolean
     ] & {
-      stakeToken: string;
-      positionToken: string;
       created: BigNumber;
       capacity: BigNumber;
       stakedAmount: BigNumber;
@@ -777,18 +779,13 @@ export interface StakeVaultV2 extends BaseContract {
     }
   >;
 
-  stakePositionId(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   updateAsset(
-    _stakeId: PromiseOrValue<BigNumberish>,
+    _stakeToken: PromiseOrValue<string>,
     _capacity: PromiseOrValue<BigNumberish>,
     _endTime: PromiseOrValue<BigNumberish>,
     _active: PromiseOrValue<boolean>,
@@ -817,6 +814,11 @@ export interface StakeVaultV2 extends BaseContract {
 
     admin(overrides?: CallOverrides): Promise<string>;
 
+    allStakePositions(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
     allowMasterContract(
       masterContract: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
@@ -829,13 +831,14 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<boolean>;
 
     deployFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _to: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     deployStake(
+      _masterContract: PromiseOrValue<string>,
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
@@ -892,11 +895,6 @@ export interface StakeVaultV2 extends BaseContract {
 
     paused(overrides?: CallOverrides): Promise<boolean>;
 
-    positionForAsset(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
     renounceRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -904,7 +902,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<void>;
 
     returnDeployedFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _from: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -916,13 +914,16 @@ export interface StakeVaultV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    stakeAssets(
-      arg0: PromiseOrValue<BigNumberish>,
+    stakePosition(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<
       [
-        string,
-        string,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -931,8 +932,6 @@ export interface StakeVaultV2 extends BaseContract {
         BigNumber,
         boolean
       ] & {
-        stakeToken: string;
-        positionToken: string;
         created: BigNumber;
         capacity: BigNumber;
         stakedAmount: BigNumber;
@@ -943,18 +942,13 @@ export interface StakeVaultV2 extends BaseContract {
       }
     >;
 
-    stakePositionId(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     updateAsset(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
@@ -972,21 +966,25 @@ export interface StakeVaultV2 extends BaseContract {
       _amount?: null
     ): DepositEventFilter;
 
-    "FundsDeployed(uint256,uint256)"(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+    "FundsDeployed(address,address,uint256)"(
+      _stakeToken?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): FundsDeployedEventFilter;
     FundsDeployed(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _stakeToken?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): FundsDeployedEventFilter;
 
-    "FundsReturned(uint256,uint256)"(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+    "FundsReturned(address,address,uint256)"(
+      _stakeToken?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): FundsReturnedEventFilter;
     FundsReturned(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _stakeToken?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): FundsReturnedEventFilter;
 
@@ -1032,14 +1030,14 @@ export interface StakeVaultV2 extends BaseContract {
     "Unpaused(address)"(account?: null): UnpausedEventFilter;
     Unpaused(account?: null): UnpausedEventFilter;
 
-    "UpdateAssetMetadata(uint256,uint256,uint256,bool)"(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+    "UpdateAssetMetadata(address,uint256,uint256,bool)"(
+      _stakeToken?: PromiseOrValue<string> | null,
       _capacity?: null,
       _endTime?: null,
       _active?: null
     ): UpdateAssetMetadataEventFilter;
     UpdateAssetMetadata(
-      _stakeId?: PromiseOrValue<BigNumberish> | null,
+      _stakeToken?: PromiseOrValue<string> | null,
       _capacity?: null,
       _endTime?: null,
       _active?: null
@@ -1077,6 +1075,11 @@ export interface StakeVaultV2 extends BaseContract {
 
     admin(overrides?: CallOverrides): Promise<BigNumber>;
 
+    allStakePositions(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     allowMasterContract(
       masterContract: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
@@ -1089,13 +1092,14 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     deployFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     deployStake(
+      _masterContract: PromiseOrValue<string>,
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
@@ -1152,11 +1156,6 @@ export interface StakeVaultV2 extends BaseContract {
 
     paused(overrides?: CallOverrides): Promise<BigNumber>;
 
-    positionForAsset(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     renounceRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -1164,7 +1163,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     returnDeployedFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _from: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1176,12 +1175,12 @@ export interface StakeVaultV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    stakeAssets(
-      arg0: PromiseOrValue<BigNumberish>,
+    stakePosition(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    stakePositionId(
+    stakePositionData(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1192,7 +1191,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     updateAsset(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
@@ -1224,6 +1223,11 @@ export interface StakeVaultV2 extends BaseContract {
 
     admin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    allStakePositions(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     allowMasterContract(
       masterContract: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
@@ -1236,13 +1240,14 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     deployFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     deployStake(
+      _masterContract: PromiseOrValue<string>,
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
@@ -1299,11 +1304,6 @@ export interface StakeVaultV2 extends BaseContract {
 
     paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    positionForAsset(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     renounceRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -1311,7 +1311,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     returnDeployedFunds(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       _from: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1323,12 +1323,12 @@ export interface StakeVaultV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    stakeAssets(
-      arg0: PromiseOrValue<BigNumberish>,
+    stakePosition(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    stakePositionId(
+    stakePositionData(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1339,7 +1339,7 @@ export interface StakeVaultV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     updateAsset(
-      _stakeId: PromiseOrValue<BigNumberish>,
+      _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,

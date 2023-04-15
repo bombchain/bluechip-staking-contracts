@@ -27,11 +27,16 @@ export interface IStakingPositionInterface extends utils.Interface {
   functions: {
     "addAprLockOption(uint16,uint256)": FunctionFragment;
     "getStakeToken()": FunctionFragment;
+    "initialize(string,string,address,string,uint256,uint256)": FunctionFragment;
     "stake(address,uint256,uint256)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "addAprLockOption" | "getStakeToken" | "stake"
+    nameOrSignatureOrTopic:
+      | "addAprLockOption"
+      | "getStakeToken"
+      | "initialize"
+      | "stake"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -41,6 +46,17 @@ export interface IStakingPositionInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getStakeToken",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "stake",
@@ -59,6 +75,7 @@ export interface IStakingPositionInterface extends utils.Interface {
     functionFragment: "getStakeToken",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stake", data: BytesLike): Result;
 
   events: {};
@@ -101,6 +118,16 @@ export interface IStakingPosition extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    initialize(
+      _name: PromiseOrValue<string>,
+      _symbol: PromiseOrValue<string>,
+      _stakeToken: PromiseOrValue<string>,
+      _baseTokenURI: PromiseOrValue<string>,
+      _capacity: PromiseOrValue<BigNumberish>,
+      _endTime: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     stake(
       _user: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
@@ -119,6 +146,16 @@ export interface IStakingPosition extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  initialize(
+    _name: PromiseOrValue<string>,
+    _symbol: PromiseOrValue<string>,
+    _stakeToken: PromiseOrValue<string>,
+    _baseTokenURI: PromiseOrValue<string>,
+    _capacity: PromiseOrValue<BigNumberish>,
+    _endTime: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   stake(
     _user: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
@@ -134,6 +171,16 @@ export interface IStakingPosition extends BaseContract {
     ): Promise<void>;
 
     getStakeToken(overrides?: CallOverrides): Promise<string>;
+
+    initialize(
+      _name: PromiseOrValue<string>,
+      _symbol: PromiseOrValue<string>,
+      _stakeToken: PromiseOrValue<string>,
+      _baseTokenURI: PromiseOrValue<string>,
+      _capacity: PromiseOrValue<BigNumberish>,
+      _endTime: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     stake(
       _user: PromiseOrValue<string>,
@@ -156,6 +203,16 @@ export interface IStakingPosition extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    initialize(
+      _name: PromiseOrValue<string>,
+      _symbol: PromiseOrValue<string>,
+      _stakeToken: PromiseOrValue<string>,
+      _baseTokenURI: PromiseOrValue<string>,
+      _capacity: PromiseOrValue<BigNumberish>,
+      _endTime: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     stake(
       _user: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
@@ -172,6 +229,16 @@ export interface IStakingPosition extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getStakeToken(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      _name: PromiseOrValue<string>,
+      _symbol: PromiseOrValue<string>,
+      _stakeToken: PromiseOrValue<string>,
+      _baseTokenURI: PromiseOrValue<string>,
+      _capacity: PromiseOrValue<BigNumberish>,
+      _endTime: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
