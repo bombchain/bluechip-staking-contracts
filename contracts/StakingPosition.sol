@@ -170,10 +170,10 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         string memory _baseTokenURI,
         uint256 _capacity,
         uint256 _endTime
-    ) public {
+    ) public onlyOwnerOrVault initializer {
         __ERC721_init(_name, _symbol);
         __Ownable_init();
-        _transferOwnership(_msgSender());
+        //  _transferOwnership(_msgSender());
         stakeToken = IERC20(_stakeToken);
         baseTokenURI = _baseTokenURI;
         capacity = _capacity;

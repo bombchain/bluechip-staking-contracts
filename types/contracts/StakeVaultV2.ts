@@ -38,7 +38,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "allowMasterContract(address,bool)": FunctionFragment;
     "allowedMasterContracts(address)": FunctionFragment;
     "deployFunds(address,uint256,address)": FunctionFragment;
-    "deployStake(address,string,string,address,string,uint256,uint256,bool)": FunctionFragment;
+    "deployStake(address,string,string,address,string,uint256,uint256,uint256,bool)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "getRoleMember(bytes32,uint256)": FunctionFragment;
     "getRoleMemberCount(bytes32)": FunctionFragment;
@@ -141,6 +141,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>
@@ -519,6 +520,7 @@ export interface StakeVaultV2 extends BaseContract {
       _baseTokenURI: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -604,6 +606,7 @@ export interface StakeVaultV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
+        BigNumber,
         boolean
       ] & {
         created: BigNumber;
@@ -612,6 +615,7 @@ export interface StakeVaultV2 extends BaseContract {
         yieldEarned: BigNumber;
         endTime: BigNumber;
         deployedAmount: BigNumber;
+        bonusMax: BigNumber;
         active: boolean;
       }
     >;
@@ -682,6 +686,7 @@ export interface StakeVaultV2 extends BaseContract {
     _baseTokenURI: PromiseOrValue<string>,
     _capacity: PromiseOrValue<BigNumberish>,
     _endTime: PromiseOrValue<BigNumberish>,
+    _bonusMax: PromiseOrValue<BigNumberish>,
     useDefaultLocks: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -767,6 +772,7 @@ export interface StakeVaultV2 extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
+      BigNumber,
       boolean
     ] & {
       created: BigNumber;
@@ -775,6 +781,7 @@ export interface StakeVaultV2 extends BaseContract {
       yieldEarned: BigNumber;
       endTime: BigNumber;
       deployedAmount: BigNumber;
+      bonusMax: BigNumber;
       active: boolean;
     }
   >;
@@ -845,6 +852,7 @@ export interface StakeVaultV2 extends BaseContract {
       _baseTokenURI: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -930,6 +938,7 @@ export interface StakeVaultV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
+        BigNumber,
         boolean
       ] & {
         created: BigNumber;
@@ -938,6 +947,7 @@ export interface StakeVaultV2 extends BaseContract {
         yieldEarned: BigNumber;
         endTime: BigNumber;
         deployedAmount: BigNumber;
+        bonusMax: BigNumber;
         active: boolean;
       }
     >;
@@ -1106,6 +1116,7 @@ export interface StakeVaultV2 extends BaseContract {
       _baseTokenURI: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1254,6 +1265,7 @@ export interface StakeVaultV2 extends BaseContract {
       _baseTokenURI: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       useDefaultLocks: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

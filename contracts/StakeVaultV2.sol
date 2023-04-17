@@ -30,6 +30,14 @@ contract StakeVaultV2 is
         uint256 yieldEarned;
         uint256 endTime; // set 0 for no end
         uint256 deployedAmount;
+        uint256 bonusMax; // maximum amount of bonus allowed, should be ~$1000
+        bool active;
+    }
+
+    struct UserBonusData {
+        IERC20 stakeToken; // Token chosen by user
+        uint256 maximum; // amount already staked
+        uint256 endTime; // set 0 for no end
         bool active;
     }
 
@@ -65,10 +73,7 @@ contract StakeVaultV2 is
     }
 
     modifier onlyOwner(address _address) {
-        require(
-            checkIfAddressIsPosition(IStakingPosition(_msgSender())),
-            "!owner"
-        );
+        require(_address == admin, "!owner");
         _;
     }
 
@@ -128,6 +133,7 @@ contract StakeVaultV2 is
         string memory _baseTokenURI,
         uint256 _capacity,
         uint256 _endTime,
+        uint256 _bonusMax,
         bool useDefaultLocks
     ) external onlyOwner(_msgSender()) {
         require(_masterContract != address(0), "Cannot add contract address 0");
@@ -151,14 +157,10 @@ contract StakeVaultV2 is
             _endTime
         );
 
-        _registerAsset(
-            IERC20(_stakeToken),
-            address(clone),
-            _capacity,
-            _endTime
-        );
-
+        _registerAsset(IERC20(_stakeToken), _bonusMax, _capacity, _endTime);
+        stakePosition[_stakeToken] = IStakingPosition(clone);
         allStakePositions[IStakingPosition(clone)] = _stakeToken;
+
         masterContractOf[clone] = _masterContract;
         // if (useDefaultLocks) {
         //     _addDefaultLocks(newStake);
@@ -243,7 +245,7 @@ contract StakeVaultV2 is
 
     function _registerAsset(
         IERC20 _stakeToken,
-        address _stakePosition,
+        uint256 _bonusMax,
         uint256 _capacity,
         uint256 _endTime
     ) internal {
@@ -255,12 +257,10 @@ contract StakeVaultV2 is
                 yieldEarned: 0,
                 endTime: _endTime,
                 deployedAmount: 0,
+                bonusMax: _bonusMax,
                 active: true
             })
         );
-
-        stakePosition[_stakeToken] = IStakingPosition(_stakePosition);
-        allStakePositions[IStakingPosition(_stakePosition)] = _stakeToken;
     }
 
     function updateAsset(

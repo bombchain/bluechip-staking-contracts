@@ -3,7 +3,7 @@ module.exports = async function ({ ethers, deployments, getNamedAccounts }) {
 
   const { deployer, dev, admin } = await getNamedAccounts();
 
-  const { stakeVault } = await deploy("StakeVault", {
+  const { stakeVault } = await deploy("StakeVaultV2", {
     from: deployer,
     proxy: {
       proxyContract: "OpenZeppelinTransparentProxy",
