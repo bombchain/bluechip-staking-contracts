@@ -123,8 +123,8 @@ export interface IStakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -151,8 +151,8 @@ export interface IStakingPosition extends BaseContract {
     _symbol: PromiseOrValue<string>,
     _stakeToken: PromiseOrValue<string>,
     _baseTokenURI: PromiseOrValue<string>,
-    _capacity: PromiseOrValue<BigNumberish>,
-    _endTime: PromiseOrValue<BigNumberish>,
+    _referralBonusAmount: PromiseOrValue<BigNumberish>,
+    _referralMinAmount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -177,8 +177,8 @@ export interface IStakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -208,8 +208,8 @@ export interface IStakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -237,8 +237,8 @@ export interface IStakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

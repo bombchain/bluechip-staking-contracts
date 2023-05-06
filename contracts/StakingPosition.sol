@@ -26,7 +26,8 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         uint256 indexed tokenId,
         uint256 amountStaked,
         uint256 lockOptionIndex,
-        bool fromCompound
+        bool fromCompound,
+        bool isBonus
     );
 
     event UnstakeTokens(
@@ -105,6 +106,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         uint256 lockTime;
         bool allowWithdrawEarly;
         bool assetTransferred;
+        bool isBonusPosition;
     }
     // tokenId => Stake
     mapping(uint256 => Stake) public stakes;
@@ -125,13 +127,19 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
 
     mapping(uint256 => uint256) public tokenLastTransferred;
 
-    mapping(address => bool) public hasReceivedBonus;
+    //  mapping(address => bool) public hasReceivedBonus;
 
-    uint256 referralBonusAmount = 0.003 ether;
+    // uint256 referralBonusAmount = 0.003 ether;
 
-    uint256 referralMinAmount = 0.01 ether;
+    // uint256 referralMinAmount = 0.01 ether;
 
-    uint256 referralBonusLockIndex = 1;
+    // uint256 referralBonusLockIndex = 1;
+
+    uint256 public referralBonusAmount;
+
+    uint256 public referralMinAmount;
+
+    uint256 public referralBonusLockIndex;
 
     uint256 public capacity;
 
@@ -146,7 +154,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     modifier onlyOwnerOrVault() {
         require(
             address(vault) == msg.sender ||
-                // treasury == msg.sender ||
+                vault.admin() == msg.sender ||
                 owner() == msg.sender,
             "!owner"
         );
@@ -154,13 +162,28 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     }
 
     modifier onlyIfNoBonus() {
-        require(!hasReceivedBonus[msg.sender], "Bonus already received");
+        bool bonus;
+        bonus = hasReceivedBonus(msg.sender);
+        require(!bonus, "Bonus already received");
         _;
+    }
+
+    function usersBonus(
+        address _user
+    ) public view returns (address, uint256, uint256, uint256, bool) {
+        return vault.usersBonus(_user);
+    }
+
+    function hasReceivedBonus(
+        address _user
+    ) public view returns (bool _receivedBonus) {
+        (, , , , _receivedBonus) = usersBonus(_user);
     }
 
     constructor(IStakeVault _stakeVault) ERC721Upgradeable() {
         vault = _stakeVault;
         masterContract = this;
+        _disableInitializers();
     }
 
     function initialize(
@@ -168,28 +191,60 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         string memory _symbol,
         address _stakeToken,
         string memory _baseTokenURI,
-        uint256 _capacity,
-        uint256 _endTime
+        uint256 _referralBonusAmount,
+        uint256 _referralMinAmount
     ) public onlyOwnerOrVault initializer {
         __ERC721_init(_name, _symbol);
         __Ownable_init();
-        //  _transferOwnership(_msgSender());
         stakeToken = IERC20(_stakeToken);
         baseTokenURI = _baseTokenURI;
-        capacity = _capacity;
-        endTime = _endTime;
+        capacity = 0;
+        endTime = 0;
+        referralBonusAmount = _referralBonusAmount;
+        referralMinAmount = _referralMinAmount;
+        referralBonusLockIndex = 1;
     }
 
     function stake(uint256 _amount, uint256 _lockOptIndex) external virtual {
-        _stake(_msgSender(), _amount, _lockOptIndex, true, true, false);
+        _stake(_msgSender(), _amount, _lockOptIndex, true, true, false, false);
+    }
+
+    function initialBonus(uint256 _amount) external {
+        uint256 bonusMax_;
+        (, , , , , , bonusMax_, ) = vault.stakePositionData(
+            address(stakeToken)
+        );
+
+        uint256 usersBonusCreated_;
+        bool usersReferralBonus_;
+        (, , usersBonusCreated_, , usersReferralBonus_) = vault.usersBonus(
+            _msgSender()
+        );
+
+        require(usersBonusCreated_ == 0, "User already received a bonus");
+        require(
+            _amount <= bonusMax_,
+            "Bonus amount must be less than or equal to the max"
+        );
+        vault._updateUserBonus(
+            _msgSender(),
+            address(stakeToken),
+            _amount,
+            block.timestamp,
+            0,
+            usersReferralBonus_
+        );
+
+        _stake(_msgSender(), _amount, 1, false, false, false, true);
+        emit FreePositionBonus(_msgSender(), _amount, 1);
     }
 
     function freeStakeBonus(
         address _user,
         uint256 _amount,
         uint256 _lockOptIndex
-    ) external virtual onlyOwner {
-        _stake(_user, _amount, _lockOptIndex, false, false, false);
+    ) external virtual onlyOwnerOrVault {
+        _stake(_user, _amount, _lockOptIndex, false, false, false, false);
         emit FreePositionBonus(_user, _amount, _lockOptIndex);
     }
 
@@ -197,16 +252,42 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         uint256 _amount,
         uint256 _lockOptIndex,
         address _referrer
-    ) external virtual onlyIfNoBonus {
+    ) external virtual {
         require(_amount >= referralMinAmount, "Must stake larger amount");
-        _stake(msg.sender, _amount, _lockOptIndex, true, false, false);
 
-        hasReceivedBonus[_msgSender()] = true;
+        address usersStakeToken_;
+        uint256 usersBonusAmount_;
+        uint256 usersBonusCreated_;
+        uint256 stakingDeposits_;
+        bool usersReferralBonus_;
+        (
+            usersStakeToken_,
+            usersBonusAmount_,
+            usersBonusCreated_,
+            stakingDeposits_,
+            usersReferralBonus_
+        ) = vault.usersBonus(_msgSender());
+
+        require(usersReferralBonus_ == false, "User already received a bonus");
+
+        vault._updateUserBonus(
+            _msgSender(),
+            usersStakeToken_,
+            usersBonusAmount_,
+            usersBonusCreated_,
+            stakingDeposits_,
+            true
+        );
+
+        _stake(msg.sender, _amount, _lockOptIndex, true, false, false, false);
+
+        //hasReceivedBonus[_msgSender()] = true;
 
         _stake(
             msg.sender,
             referralBonusAmount,
             referralBonusLockIndex,
+            false,
             false,
             false,
             false
@@ -215,6 +296,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             _referrer,
             referralBonusAmount,
             referralBonusLockIndex,
+            false,
             false,
             false,
             false
@@ -238,7 +320,8 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         uint256 _lockOptIndex,
         bool _transferStakeToken,
         bool _allowWithdrawEarly,
-        bool _fromCompound
+        bool _fromCompound,
+        bool _isBonus
     ) internal {
         require(_lockOptIndex < _aprLockOptions.length, "invalid lock option");
         _amountStaked = _amountStaked == 0
@@ -265,16 +348,20 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             PERCENT_DENOMENATOR /
             ONE_YEAR;
         totalYieldAtMaturity += _yieldAtMaturity;
+
         if (_transferStakeToken) {
             vault._deposit(_user, address(stakeToken), _amountStaked);
+            handleInitialBonus(_user, _amountStaked);
         }
+
         stakes[_ids.current()] = Stake({
             created: block.timestamp,
             amountStaked: _amountStaked,
             apr: _aprLockOptions[_lockOptIndex].apr,
             lockTime: _aprLockOptions[_lockOptIndex].lockTime,
             allowWithdrawEarly: _allowWithdrawEarly,
-            assetTransferred: _transferStakeToken
+            assetTransferred: _transferStakeToken,
+            isBonusPosition: _isBonus
         });
 
         _safeMint(_user, _ids.current());
@@ -285,7 +372,8 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             _ids.current(),
             _amountStaked,
             _lockOptIndex,
-            _fromCompound
+            _fromCompound,
+            _isBonus
         );
     }
 
@@ -296,6 +384,14 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             _user == ownerOf(_tokenId),
             "only the owner of the staked tokens can unstake"
         );
+
+        if (_tokenStake.isBonusPosition) {
+            require(
+                checkBonusCanWithdraw(_user),
+                "Not eligible to claim bonus position.  Ensure adequate deposits were made"
+            );
+        }
+
         bool _isUnstakingEarly = block.timestamp <
             _tokenStake.created + _tokenStake.lockTime;
 
@@ -308,6 +404,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
                 _isEarlyWithdraw,
                 "Must acknowledge the early withdraw due to loss of tokens"
             );
+
             vault._withdraw(
                 _user,
                 address(stakeToken),
@@ -330,7 +427,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         _burn(_tokenId);
     }
 
-    function adminRefundDeposit(uint256 _tokenId) external onlyOwner {
+    function adminRefundDeposit(uint256 _tokenId) external onlyOwnerOrVault {
         Stake memory _tokenStake = stakes[_tokenId];
 
         address _user = ownerOf(_tokenId);
@@ -369,6 +466,13 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             "Position is not at maturity"
         );
 
+        if (_tokenStake.isBonusPosition) {
+            require(
+                checkBonusCanWithdraw(_user),
+                "Not eligible to claim bonus position.  Ensure adequate deposits were made"
+            );
+        }
+
         uint256 _totalEarnedAmount = getTotalEarnedAmount(_tokenId);
 
         _burn(_tokenId);
@@ -380,7 +484,8 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
             _lockOptIndex,
             false,
             true,
-            true
+            true,
+            false
         );
     }
 
@@ -392,6 +497,59 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             claimAndCompound(_user, _tokenIds[i], _lockOptIndex);
         }
+    }
+
+    // The purpose of this function is for handling stake deposits
+    // It should update the amount deposited towards unlocking a bonus
+    // only if it is within the first 6 months
+    function handleInitialBonus(
+        address _user,
+        uint256 _depositAmount
+    ) internal returns (bool) {
+        uint256 usersBonusAmount_;
+        uint256 usersBonusCreated_;
+        uint256 usersStakingDeposits_;
+        bool usersReferralBonus_;
+        (
+            ,
+            usersBonusAmount_,
+            usersBonusCreated_,
+            usersStakingDeposits_,
+            usersReferralBonus_
+        ) = vault.usersBonus(_user);
+
+        if (block.timestamp <= usersBonusCreated_ + (ONE_YEAR / 2)) {
+            vault._updateUserBonus(
+                _user,
+                address(stakeToken),
+                usersBonusAmount_,
+                usersBonusCreated_,
+                usersStakingDeposits_ + _depositAmount,
+                usersReferralBonus_
+            );
+            return true;
+        }
+        return false;
+    }
+
+    // The purpose of this function is for checking if a user has made adequate deposits
+    // to be able to withdraw their initial bonus.
+    // The function which adds qualifying deposits to the users bonus data, it checks to ensure those deposits
+    // are within the first 6 months.  This function doesn't need to check the date, only that the qualifying deposits are
+    // high enough.
+    function checkBonusCanWithdraw(address _user) internal view returns (bool) {
+        uint256 usersBonusAmount_;
+        uint256 usersStakingDeposits_;
+        (, usersBonusAmount_, , usersStakingDeposits_, ) = vault.usersBonus(
+            _user
+        );
+
+        if (
+            (usersBonusAmount_ * 10) <= usersStakingDeposits_ // Check if user has made deposits equal to 10 times the bonus
+        ) {
+            return true;
+        }
+        return false;
     }
 
     function tokenURI(
@@ -426,7 +584,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         return _exists(_tokenId);
     }
 
-    function setBaseURI(string memory _uri) external onlyOwner {
+    function setBaseURI(string memory _uri) external onlyOwnerOrVault {
         baseTokenURI = _uri;
         emit SetBaseTokenURI(_uri);
     }
@@ -525,22 +683,24 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         );
     }
 
-    function setBonusAmount(uint256 _bonusAmount) external onlyOwner {
+    function setBonusAmount(uint256 _bonusAmount) external onlyOwnerOrVault {
         referralBonusAmount = _bonusAmount;
         emit SetBonusAmount(_bonusAmount);
     }
 
-    function setBonusMinAmount(uint256 _bonusMinAmount) external onlyOwner {
+    function setBonusMinAmount(
+        uint256 _bonusMinAmount
+    ) external onlyOwnerOrVault {
         referralMinAmount = _bonusMinAmount;
         emit SetBonusMinAmount(_bonusMinAmount);
     }
 
-    function setBonusLockIndex(uint256 _lockIndex) external onlyOwner {
+    function setBonusLockIndex(uint256 _lockIndex) external onlyOwnerOrVault {
         referralBonusLockIndex = _lockIndex;
         emit SetBonusLockIndex(_lockIndex);
     }
 
-    function setCapacity(uint256 _capacity) external onlyOwner {
+    function setCapacity(uint256 _capacity) external onlyOwnerOrVault {
         capacity = _capacity;
         emit SetCapacity(_capacity);
     }
@@ -548,7 +708,7 @@ contract StakingPosition is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     function setIsBlacklisted(
         uint256 _tokenId,
         bool _isBlacklisted
-    ) external onlyOwner {
+    ) external onlyOwnerOrVault {
         isBlacklisted[_tokenId] = _isBlacklisted;
         emit SetTokenBlacklist(_tokenId, _isBlacklisted);
     }

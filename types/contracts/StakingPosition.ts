@@ -62,6 +62,7 @@ export interface StakingPositionInterface extends utils.Interface {
     "getTotalYieldAtMaturity(uint256)": FunctionFragment;
     "governanceRecoverUnsupported(address,address)": FunctionFragment;
     "hasReceivedBonus(address)": FunctionFragment;
+    "initialBonus(uint256)": FunctionFragment;
     "initialize(string,string,address,string,uint256,uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "isBlacklisted(uint256)": FunctionFragment;
@@ -71,6 +72,9 @@ export interface StakingPositionInterface extends utils.Interface {
     "ownedIndex(uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
+    "referralBonusAmount()": FunctionFragment;
+    "referralBonusLockIndex()": FunctionFragment;
+    "referralMinAmount()": FunctionFragment;
     "removeAprLockOption(uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
@@ -98,6 +102,7 @@ export interface StakingPositionInterface extends utils.Interface {
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateAprLockOption(uint256,uint16,uint256)": FunctionFragment;
+    "usersBonus(address)": FunctionFragment;
     "vault()": FunctionFragment;
     "withdraw(uint256,bool)": FunctionFragment;
     "withdrawMulti(uint256[],bool)": FunctionFragment;
@@ -126,6 +131,7 @@ export interface StakingPositionInterface extends utils.Interface {
       | "getTotalYieldAtMaturity"
       | "governanceRecoverUnsupported"
       | "hasReceivedBonus"
+      | "initialBonus"
       | "initialize"
       | "isApprovedForAll"
       | "isBlacklisted"
@@ -135,6 +141,9 @@ export interface StakingPositionInterface extends utils.Interface {
       | "ownedIndex"
       | "owner"
       | "ownerOf"
+      | "referralBonusAmount"
+      | "referralBonusLockIndex"
+      | "referralMinAmount"
       | "removeAprLockOption"
       | "renounceOwnership"
       | "safeTransferFrom(address,address,uint256)"
@@ -162,6 +171,7 @@ export interface StakingPositionInterface extends utils.Interface {
       | "transferFrom"
       | "transferOwnership"
       | "updateAprLockOption"
+      | "usersBonus"
       | "vault"
       | "withdraw"
       | "withdrawMulti"
@@ -258,6 +268,10 @@ export interface StakingPositionInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "initialBonus",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "initialize",
     values: [
       PromiseOrValue<string>,
@@ -293,6 +307,18 @@ export interface StakingPositionInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "ownerOf",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "referralBonusAmount",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "referralBonusLockIndex",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "referralMinAmount",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "removeAprLockOption",
@@ -420,6 +446,10 @@ export interface StakingPositionInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "usersBonus",
+    values: [PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(functionFragment: "vault", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdraw",
@@ -502,6 +532,10 @@ export interface StakingPositionInterface extends utils.Interface {
     functionFragment: "hasReceivedBonus",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "initialBonus",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
@@ -523,6 +557,18 @@ export interface StakingPositionInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "ownedIndex", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "referralBonusAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "referralBonusLockIndex",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "referralMinAmount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "removeAprLockOption",
     data: BytesLike
@@ -613,6 +659,7 @@ export interface StakingPositionInterface extends utils.Interface {
     functionFragment: "updateAprLockOption",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "usersBonus", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "vault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
   decodeFunctionResult(
@@ -624,7 +671,7 @@ export interface StakingPositionInterface extends utils.Interface {
     "AddAprLockOption(uint16,uint256)": EventFragment;
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "CreateStake(address,uint256,uint256,uint256,bool)": EventFragment;
+    "CreateStake(address,uint256,uint256,uint256,bool,bool)": EventFragment;
     "FreePositionBonus(address,uint256,uint256)": EventFragment;
     "Initialized(uint8)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
@@ -705,9 +752,10 @@ export interface CreateStakeEventObject {
   amountStaked: BigNumber;
   lockOptionIndex: BigNumber;
   fromCompound: boolean;
+  isBonus: boolean;
 }
 export type CreateStakeEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, boolean],
+  [string, BigNumber, BigNumber, BigNumber, boolean, boolean],
   CreateStakeEventObject
 >;
 
@@ -1005,17 +1053,22 @@ export interface StakingPosition extends BaseContract {
     ): Promise<ContractTransaction>;
 
     hasReceivedBonus(
-      arg0: PromiseOrValue<string>,
+      _user: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    ): Promise<[boolean] & { _receivedBonus: boolean }>;
+
+    initialBonus(
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     initialize(
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1050,6 +1103,12 @@ export interface StakingPosition extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
+
+    referralBonusAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    referralBonusLockIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    referralMinAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     removeAprLockOption(
       _index: PromiseOrValue<BigNumberish>,
@@ -1131,13 +1190,14 @@ export interface StakingPosition extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [BigNumber, BigNumber, number, BigNumber, boolean, boolean] & {
+      [BigNumber, BigNumber, number, BigNumber, boolean, boolean, boolean] & {
         created: BigNumber;
         amountStaked: BigNumber;
         apr: number;
         lockTime: BigNumber;
         allowWithdrawEarly: boolean;
         assetTransferred: boolean;
+        isBonusPosition: boolean;
       }
     >;
 
@@ -1196,6 +1256,11 @@ export interface StakingPosition extends BaseContract {
       _lockTime: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    usersBonus(
+      _user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
 
     vault(overrides?: CallOverrides): Promise<[string]>;
 
@@ -1307,17 +1372,22 @@ export interface StakingPosition extends BaseContract {
   ): Promise<ContractTransaction>;
 
   hasReceivedBonus(
-    arg0: PromiseOrValue<string>,
+    _user: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  initialBonus(
+    _amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   initialize(
     _name: PromiseOrValue<string>,
     _symbol: PromiseOrValue<string>,
     _stakeToken: PromiseOrValue<string>,
     _baseTokenURI: PromiseOrValue<string>,
-    _capacity: PromiseOrValue<BigNumberish>,
-    _endTime: PromiseOrValue<BigNumberish>,
+    _referralBonusAmount: PromiseOrValue<BigNumberish>,
+    _referralMinAmount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1352,6 +1422,12 @@ export interface StakingPosition extends BaseContract {
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  referralBonusAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+  referralBonusLockIndex(overrides?: CallOverrides): Promise<BigNumber>;
+
+  referralMinAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
   removeAprLockOption(
     _index: PromiseOrValue<BigNumberish>,
@@ -1433,13 +1509,14 @@ export interface StakingPosition extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
-    [BigNumber, BigNumber, number, BigNumber, boolean, boolean] & {
+    [BigNumber, BigNumber, number, BigNumber, boolean, boolean, boolean] & {
       created: BigNumber;
       amountStaked: BigNumber;
       apr: number;
       lockTime: BigNumber;
       allowWithdrawEarly: boolean;
       assetTransferred: boolean;
+      isBonusPosition: boolean;
     }
   >;
 
@@ -1498,6 +1575,11 @@ export interface StakingPosition extends BaseContract {
     _lockTime: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  usersBonus(
+    _user: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
 
   vault(overrides?: CallOverrides): Promise<string>;
 
@@ -1609,17 +1691,22 @@ export interface StakingPosition extends BaseContract {
     ): Promise<void>;
 
     hasReceivedBonus(
-      arg0: PromiseOrValue<string>,
+      _user: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    initialBonus(
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     initialize(
       _name: PromiseOrValue<string>,
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1654,6 +1741,12 @@ export interface StakingPosition extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    referralBonusAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    referralBonusLockIndex(overrides?: CallOverrides): Promise<BigNumber>;
+
+    referralMinAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeAprLockOption(
       _index: PromiseOrValue<BigNumberish>,
@@ -1733,13 +1826,14 @@ export interface StakingPosition extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [BigNumber, BigNumber, number, BigNumber, boolean, boolean] & {
+      [BigNumber, BigNumber, number, BigNumber, boolean, boolean, boolean] & {
         created: BigNumber;
         amountStaked: BigNumber;
         apr: number;
         lockTime: BigNumber;
         allowWithdrawEarly: boolean;
         assetTransferred: boolean;
+        isBonusPosition: boolean;
       }
     >;
 
@@ -1799,6 +1893,11 @@ export interface StakingPosition extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    usersBonus(
+      _user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
+
     vault(overrides?: CallOverrides): Promise<string>;
 
     withdraw(
@@ -1846,19 +1945,21 @@ export interface StakingPosition extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "CreateStake(address,uint256,uint256,uint256,bool)"(
+    "CreateStake(address,uint256,uint256,uint256,bool,bool)"(
       user?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null,
       amountStaked?: null,
       lockOptionIndex?: null,
-      fromCompound?: null
+      fromCompound?: null,
+      isBonus?: null
     ): CreateStakeEventFilter;
     CreateStake(
       user?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null,
       amountStaked?: null,
       lockOptionIndex?: null,
-      fromCompound?: null
+      fromCompound?: null,
+      isBonus?: null
     ): CreateStakeEventFilter;
 
     "FreePositionBonus(address,uint256,uint256)"(
@@ -2093,8 +2194,13 @@ export interface StakingPosition extends BaseContract {
     ): Promise<BigNumber>;
 
     hasReceivedBonus(
-      arg0: PromiseOrValue<string>,
+      _user: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    initialBonus(
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     initialize(
@@ -2102,8 +2208,8 @@ export interface StakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -2138,6 +2244,12 @@ export interface StakingPosition extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    referralBonusAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    referralBonusLockIndex(overrides?: CallOverrides): Promise<BigNumber>;
+
+    referralMinAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeAprLockOption(
       _index: PromiseOrValue<BigNumberish>,
@@ -2276,6 +2388,11 @@ export interface StakingPosition extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    usersBonus(
+      _user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     vault(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdraw(
@@ -2387,8 +2504,13 @@ export interface StakingPosition extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     hasReceivedBonus(
-      arg0: PromiseOrValue<string>,
+      _user: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialBonus(
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     initialize(
@@ -2396,8 +2518,8 @@ export interface StakingPosition extends BaseContract {
       _symbol: PromiseOrValue<string>,
       _stakeToken: PromiseOrValue<string>,
       _baseTokenURI: PromiseOrValue<string>,
-      _capacity: PromiseOrValue<BigNumberish>,
-      _endTime: PromiseOrValue<BigNumberish>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -2432,6 +2554,16 @@ export interface StakingPosition extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    referralBonusAmount(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    referralBonusLockIndex(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    referralMinAmount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     removeAprLockOption(
       _index: PromiseOrValue<BigNumberish>,
@@ -2570,6 +2702,11 @@ export interface StakingPosition extends BaseContract {
       _apr: PromiseOrValue<BigNumberish>,
       _lockTime: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    usersBonus(
+      _user: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     vault(overrides?: CallOverrides): Promise<PopulatedTransaction>;

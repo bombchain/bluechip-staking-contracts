@@ -35,10 +35,11 @@ contract StakeVaultV2 is
     }
 
     struct UserBonusData {
-        IERC20 stakeToken; // Token chosen by user
-        uint256 maximum; // amount already staked
-        uint256 endTime; // set 0 for no end
-        bool active;
+        IERC20 bonusToken; // Token chosen by user for initial bonus
+        uint256 bonusAmount; // amount provided for bonus
+        uint256 bonusCreated; // timestamp of the bonus
+        uint256 stakingDeposits; // Amount of deposits towards releasing stake
+        bool referralBonus; // Has the user received a referral bonus
     }
 
     struct AprLockDefaults {
@@ -63,6 +64,8 @@ contract StakeVaultV2 is
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
+    mapping(address => UserBonusData) public usersBonus;
+
     //  these to use access control
     modifier onlyPositionOrOwner() {
         require(
@@ -81,6 +84,7 @@ contract StakeVaultV2 is
         IERC20 indexed _stakeToken,
         uint256 _capacity,
         uint256 _endTime,
+        uint256 _bonusMax,
         bool _active
     );
 
@@ -96,9 +100,9 @@ contract StakeVaultV2 is
         uint256 _amount
     );
 
-    event Deposit(IERC20 indexed _token, uint256 _amount);
+    event Deposit(IERC20 indexed _token, address _user, uint256 _amount);
 
-    event Withdraw(IERC20 indexed _token, uint256 _amount);
+    event Withdraw(IERC20 indexed _token, address _user, uint256 _amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -134,18 +138,19 @@ contract StakeVaultV2 is
         uint256 _capacity,
         uint256 _endTime,
         uint256 _bonusMax,
-        bool useDefaultLocks
+        uint256 _referralBonusAmount,
+        uint256 _referralMinAmount,
+        uint16[] memory _aprAmounts
     ) external onlyOwner(_msgSender()) {
-        require(_masterContract != address(0), "Cannot add contract address 0");
         require(
             allowedMasterContracts[_masterContract],
             "Contract has not been allowed"
         );
 
-        require(
-            !checkStakeDuplicate(_stakeToken),
-            "Stake already exists for this asset, please update it"
-        );
+        // require(
+        //     !checkStakeDuplicate(_stakeToken),
+        //     "Stake already exists for this asset, please update it"
+        // );
 
         address clone = ClonesUpgradeable.clone(_masterContract);
         IStakingPosition(clone).initialize(
@@ -153,8 +158,8 @@ contract StakeVaultV2 is
             _symbol,
             address(_stakeToken),
             _baseTokenURI,
-            _capacity,
-            _endTime
+            _referralBonusAmount,
+            _referralMinAmount
         );
 
         _registerAsset(IERC20(_stakeToken), _bonusMax, _capacity, _endTime);
@@ -162,48 +167,31 @@ contract StakeVaultV2 is
         allStakePositions[IStakingPosition(clone)] = _stakeToken;
 
         masterContractOf[clone] = _masterContract;
-        // if (useDefaultLocks) {
-        //     _addDefaultLocks(newStake);
-        // }
-        // newStake.transferOwnership(admin);
+
+        uint256 length = _aprAmounts.length;
+        if (length > 0) {
+            for (uint256 pid = 0; pid < length; ++pid) {
+                stakePosition[_stakeToken].addAprLockOption(
+                    _aprAmounts[pid],
+                    (pid + 1) * 7776000 // adds APRs in 3 month increments
+                );
+            }
+        }
     }
 
-    // function deployStake(
-    //     string memory _name,
-    //     string memory _symbol,
-    //     address _stakeToken,
-    //     string memory _baseTokenURI,
-    //     uint256 _capacity,
-    //     uint256 _endTime,
-    //     bool useDefaultLocks
-    // ) external onlyOwner {
-    //     require(
-    //         !checkStakeDuplicate(_stakeToken),
-    //         "Stake already exists for this asset, please update it"
-    //     );
-
-    //     StakingPositions newStake = new StakingPositions(
-    //         _name,
-    //         _symbol,
-    //         _stakeToken,
-    //         address(this),
-    //         _baseTokenURI,
-    //         _capacity,
-    //         _endTime
-    //     );
-    //     _registerAsset(_stakeToken, address(newStake), _capacity, _endTime);
-
-    //     if (useDefaultLocks) {
-    //         _addDefaultLocks(newStake);
-    //     }
-    //     newStake.transferOwnership(admin);
-    // }
-
-    function _addDefaultLocks(address _stakePosition) internal {
-        // _stakePosition.addAprLockOption(920, 90 days);
-        // _stakePosition.addAprLockOption(1490, 180 days);
-        // _stakePosition.addAprLockOption(2170, 270 days);
-        // _stakePosition.addAprLockOption(2980, 360 days);
+    function _updateUserBonus(
+        address _user,
+        IERC20 _token,
+        uint256 _bonusAmount,
+        uint256 _bonusCreated,
+        uint256 _stakingDeposits,
+        bool _referralBonus
+    ) external onlyPositionOrOwner {
+        usersBonus[_user].bonusToken = _token;
+        usersBonus[_user].bonusAmount = _bonusAmount;
+        usersBonus[_user].bonusCreated = _bonusCreated;
+        usersBonus[_user].stakingDeposits = _stakingDeposits;
+        usersBonus[_user].referralBonus = _referralBonus;
     }
 
     function _deposit(
@@ -221,7 +209,7 @@ contract StakeVaultV2 is
             "Token could not be transferred"
         );
 
-        emit Deposit(_token, _amount);
+        emit Deposit(_token, _user, _amount);
     }
 
     function _withdraw(
@@ -236,7 +224,7 @@ contract StakeVaultV2 is
         _stakePosition.stakedAmount -= _amount;
         _stakePosition.yieldEarned += _yieldEarned;
 
-        emit Withdraw(_token, _amount + _yieldEarned);
+        emit Withdraw(_token, _user, _amount + _yieldEarned);
         require(
             IERC20(_token).transfer(_user, _amount + _yieldEarned),
             "Token could not be transferred"
@@ -267,6 +255,7 @@ contract StakeVaultV2 is
         IERC20 _stakeToken,
         uint256 _capacity,
         uint256 _endTime,
+        uint256 _bonusMax,
         bool _active
     ) external onlyOwner(_msgSender()) {
         require(
@@ -277,8 +266,15 @@ contract StakeVaultV2 is
         _stakePosition.capacity = _capacity;
         _stakePosition.endTime = _endTime;
         _stakePosition.active = _active;
+        _stakePosition.bonusMax = _bonusMax;
 
-        emit UpdateAssetMetadata(_stakeToken, _capacity, _endTime, _active);
+        emit UpdateAssetMetadata(
+            _stakeToken,
+            _capacity,
+            _endTime,
+            _bonusMax,
+            _active
+        );
     }
 
     function deployFunds(
@@ -359,7 +355,9 @@ contract StakeVaultV2 is
         //     }
         // }
         if (allStakePositions[_position] != IERC20(address(0))) {
-            return true;
+            if (stakePosition[allStakePositions[_position]] == _position) {
+                return true;
+            }
         }
         return false;
     }

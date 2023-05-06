@@ -65,12 +65,12 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "_capacity",
+        name: "_referralBonusAmount",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "_endTime",
+        name: "_referralMinAmount",
         type: "uint256",
       },
     ],

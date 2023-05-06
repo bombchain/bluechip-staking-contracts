@@ -10,8 +10,8 @@ interface IStakingPosition {
         string memory _symbol,
         address _stakeToken,
         string memory _baseTokenURI,
-        uint256 _capacity,
-        uint256 _endTime
+        uint256 _referralBonusAmount,
+        uint256 _referralMinAmount
     ) external;
 
     function addAprLockOption(uint16 _apr, uint256 _lockTime) external;

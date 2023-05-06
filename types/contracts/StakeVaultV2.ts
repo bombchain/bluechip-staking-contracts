@@ -32,13 +32,14 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "OPERATOR_ROLE()": FunctionFragment;
     "_deposit(address,address,uint256)": FunctionFragment;
+    "_updateUserBonus(address,address,uint256,uint256,uint256,bool)": FunctionFragment;
     "_withdraw(address,address,uint256,uint256)": FunctionFragment;
     "admin()": FunctionFragment;
     "allStakePositions(address)": FunctionFragment;
     "allowMasterContract(address,bool)": FunctionFragment;
     "allowedMasterContracts(address)": FunctionFragment;
     "deployFunds(address,uint256,address)": FunctionFragment;
-    "deployStake(address,string,string,address,string,uint256,uint256,uint256,bool)": FunctionFragment;
+    "deployStake(address,string,string,address,string,uint256,uint256,uint256,uint256,uint256,uint16[])": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "getRoleMember(bytes32,uint256)": FunctionFragment;
     "getRoleMemberCount(bytes32)": FunctionFragment;
@@ -54,7 +55,8 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "stakePosition(address)": FunctionFragment;
     "stakePositionData(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "updateAsset(address,uint256,uint256,bool)": FunctionFragment;
+    "updateAsset(address,uint256,uint256,uint256,bool)": FunctionFragment;
+    "usersBonus(address)": FunctionFragment;
   };
 
   getFunction(
@@ -62,6 +64,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
       | "DEFAULT_ADMIN_ROLE"
       | "OPERATOR_ROLE"
       | "_deposit"
+      | "_updateUserBonus"
       | "_withdraw"
       | "admin"
       | "allStakePositions"
@@ -85,6 +88,7 @@ export interface StakeVaultV2Interface extends utils.Interface {
       | "stakePositionData"
       | "supportsInterface"
       | "updateAsset"
+      | "usersBonus"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -101,6 +105,17 @@ export interface StakeVaultV2Interface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_updateUserBonus",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<boolean>
     ]
   ): string;
   encodeFunctionData(
@@ -144,7 +159,9 @@ export interface StakeVaultV2Interface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<boolean>
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>[]
     ]
   ): string;
   encodeFunctionData(
@@ -214,8 +231,13 @@ export interface StakeVaultV2Interface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "usersBonus",
+    values: [PromiseOrValue<string>]
   ): string;
 
   decodeFunctionResult(
@@ -227,6 +249,10 @@ export interface StakeVaultV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_updateUserBonus",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
   decodeFunctionResult(
@@ -298,9 +324,10 @@ export interface StakeVaultV2Interface extends utils.Interface {
     functionFragment: "updateAsset",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "usersBonus", data: BytesLike): Result;
 
   events: {
-    "Deposit(address,uint256)": EventFragment;
+    "Deposit(address,address,uint256)": EventFragment;
     "FundsDeployed(address,address,uint256)": EventFragment;
     "FundsReturned(address,address,uint256)": EventFragment;
     "Initialized(uint8)": EventFragment;
@@ -309,8 +336,8 @@ export interface StakeVaultV2Interface extends utils.Interface {
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
     "Unpaused(address)": EventFragment;
-    "UpdateAssetMetadata(address,uint256,uint256,bool)": EventFragment;
-    "Withdraw(address,uint256)": EventFragment;
+    "UpdateAssetMetadata(address,uint256,uint256,uint256,bool)": EventFragment;
+    "Withdraw(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Deposit"): EventFragment;
@@ -328,9 +355,13 @@ export interface StakeVaultV2Interface extends utils.Interface {
 
 export interface DepositEventObject {
   _token: string;
+  _user: string;
   _amount: BigNumber;
 }
-export type DepositEvent = TypedEvent<[string, BigNumber], DepositEventObject>;
+export type DepositEvent = TypedEvent<
+  [string, string, BigNumber],
+  DepositEventObject
+>;
 
 export type DepositEventFilter = TypedEventFilter<DepositEvent>;
 
@@ -420,10 +451,11 @@ export interface UpdateAssetMetadataEventObject {
   _stakeToken: string;
   _capacity: BigNumber;
   _endTime: BigNumber;
+  _bonusMax: BigNumber;
   _active: boolean;
 }
 export type UpdateAssetMetadataEvent = TypedEvent<
-  [string, BigNumber, BigNumber, boolean],
+  [string, BigNumber, BigNumber, BigNumber, boolean],
   UpdateAssetMetadataEventObject
 >;
 
@@ -432,10 +464,11 @@ export type UpdateAssetMetadataEventFilter =
 
 export interface WithdrawEventObject {
   _token: string;
+  _user: string;
   _amount: BigNumber;
 }
 export type WithdrawEvent = TypedEvent<
-  [string, BigNumber],
+  [string, string, BigNumber],
   WithdrawEventObject
 >;
 
@@ -476,6 +509,16 @@ export interface StakeVaultV2 extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -521,7 +564,9 @@ export interface StakeVaultV2 extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _bonusMax: PromiseOrValue<BigNumberish>,
-      useDefaultLocks: PromiseOrValue<boolean>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
+      _aprAmounts: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -629,9 +674,23 @@ export interface StakeVaultV2 extends BaseContract {
       _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber, BigNumber, BigNumber, boolean] & {
+        bonusToken: string;
+        bonusAmount: BigNumber;
+        bonusCreated: BigNumber;
+        stakingDeposits: BigNumber;
+        referralBonus: boolean;
+      }
+    >;
   };
 
   DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
@@ -642,6 +701,16 @@ export interface StakeVaultV2 extends BaseContract {
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  _updateUserBonus(
+    _user: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _bonusAmount: PromiseOrValue<BigNumberish>,
+    _bonusCreated: PromiseOrValue<BigNumberish>,
+    _stakingDeposits: PromiseOrValue<BigNumberish>,
+    _referralBonus: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -687,7 +756,9 @@ export interface StakeVaultV2 extends BaseContract {
     _capacity: PromiseOrValue<BigNumberish>,
     _endTime: PromiseOrValue<BigNumberish>,
     _bonusMax: PromiseOrValue<BigNumberish>,
-    useDefaultLocks: PromiseOrValue<boolean>,
+    _referralBonusAmount: PromiseOrValue<BigNumberish>,
+    _referralMinAmount: PromiseOrValue<BigNumberish>,
+    _aprAmounts: PromiseOrValue<BigNumberish>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -795,9 +866,23 @@ export interface StakeVaultV2 extends BaseContract {
     _stakeToken: PromiseOrValue<string>,
     _capacity: PromiseOrValue<BigNumberish>,
     _endTime: PromiseOrValue<BigNumberish>,
+    _bonusMax: PromiseOrValue<BigNumberish>,
     _active: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  usersBonus(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<
+    [string, BigNumber, BigNumber, BigNumber, boolean] & {
+      bonusToken: string;
+      bonusAmount: BigNumber;
+      bonusCreated: BigNumber;
+      stakingDeposits: BigNumber;
+      referralBonus: boolean;
+    }
+  >;
 
   callStatic: {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
@@ -808,6 +893,16 @@ export interface StakeVaultV2 extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -853,7 +948,9 @@ export interface StakeVaultV2 extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _bonusMax: PromiseOrValue<BigNumberish>,
-      useDefaultLocks: PromiseOrValue<boolean>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
+      _aprAmounts: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -961,18 +1058,34 @@ export interface StakeVaultV2 extends BaseContract {
       _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber, BigNumber, BigNumber, boolean] & {
+        bonusToken: string;
+        bonusAmount: BigNumber;
+        bonusCreated: BigNumber;
+        stakingDeposits: BigNumber;
+        referralBonus: boolean;
+      }
+    >;
   };
 
   filters: {
-    "Deposit(address,uint256)"(
+    "Deposit(address,address,uint256)"(
       _token?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): DepositEventFilter;
     Deposit(
       _token?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): DepositEventFilter;
 
@@ -1040,25 +1153,29 @@ export interface StakeVaultV2 extends BaseContract {
     "Unpaused(address)"(account?: null): UnpausedEventFilter;
     Unpaused(account?: null): UnpausedEventFilter;
 
-    "UpdateAssetMetadata(address,uint256,uint256,bool)"(
+    "UpdateAssetMetadata(address,uint256,uint256,uint256,bool)"(
       _stakeToken?: PromiseOrValue<string> | null,
       _capacity?: null,
       _endTime?: null,
+      _bonusMax?: null,
       _active?: null
     ): UpdateAssetMetadataEventFilter;
     UpdateAssetMetadata(
       _stakeToken?: PromiseOrValue<string> | null,
       _capacity?: null,
       _endTime?: null,
+      _bonusMax?: null,
       _active?: null
     ): UpdateAssetMetadataEventFilter;
 
-    "Withdraw(address,uint256)"(
+    "Withdraw(address,address,uint256)"(
       _token?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): WithdrawEventFilter;
     Withdraw(
       _token?: PromiseOrValue<string> | null,
+      _user?: null,
       _amount?: null
     ): WithdrawEventFilter;
   };
@@ -1072,6 +1189,16 @@ export interface StakeVaultV2 extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1117,7 +1244,9 @@ export interface StakeVaultV2 extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _bonusMax: PromiseOrValue<BigNumberish>,
-      useDefaultLocks: PromiseOrValue<boolean>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
+      _aprAmounts: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1205,8 +1334,14 @@ export interface StakeVaultV2 extends BaseContract {
       _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
@@ -1221,6 +1356,16 @@ export interface StakeVaultV2 extends BaseContract {
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1266,7 +1411,9 @@ export interface StakeVaultV2 extends BaseContract {
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
       _bonusMax: PromiseOrValue<BigNumberish>,
-      useDefaultLocks: PromiseOrValue<boolean>,
+      _referralBonusAmount: PromiseOrValue<BigNumberish>,
+      _referralMinAmount: PromiseOrValue<BigNumberish>,
+      _aprAmounts: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1354,8 +1501,14 @@ export interface StakeVaultV2 extends BaseContract {
       _stakeToken: PromiseOrValue<string>,
       _capacity: PromiseOrValue<BigNumberish>,
       _endTime: PromiseOrValue<BigNumberish>,
+      _bonusMax: PromiseOrValue<BigNumberish>,
       _active: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

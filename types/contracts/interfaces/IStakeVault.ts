@@ -26,12 +26,21 @@ import type {
 export interface IStakeVaultInterface extends utils.Interface {
   functions: {
     "_deposit(address,address,uint256)": FunctionFragment;
+    "_updateUserBonus(address,address,uint256,uint256,uint256,bool)": FunctionFragment;
     "_withdraw(address,address,uint256,uint256)": FunctionFragment;
-    "owner()": FunctionFragment;
+    "admin()": FunctionFragment;
+    "stakePositionData(address)": FunctionFragment;
+    "usersBonus(address)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "_deposit" | "_withdraw" | "owner"
+    nameOrSignatureOrTopic:
+      | "_deposit"
+      | "_updateUserBonus"
+      | "_withdraw"
+      | "admin"
+      | "stakePositionData"
+      | "usersBonus"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -43,6 +52,17 @@ export interface IStakeVaultInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "_updateUserBonus",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<boolean>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "_withdraw",
     values: [
       PromiseOrValue<string>,
@@ -51,11 +71,28 @@ export interface IStakeVaultInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "admin", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "stakePositionData",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "usersBonus",
+    values: [PromiseOrValue<string>]
+  ): string;
 
   decodeFunctionResult(functionFragment: "_deposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_updateUserBonus",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_withdraw", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "stakePositionData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "usersBonus", data: BytesLike): Result;
 
   events: {};
 }
@@ -94,6 +131,16 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     _withdraw(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -102,13 +149,44 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+    admin(overrides?: CallOverrides): Promise<[string]>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean
+      ]
+    >;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
   };
 
   _deposit(
     _user: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  _updateUserBonus(
+    _user: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _bonusAmount: PromiseOrValue<BigNumberish>,
+    _bonusCreated: PromiseOrValue<BigNumberish>,
+    _stakingDeposits: PromiseOrValue<BigNumberish>,
+    _referralBonus: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -120,13 +198,44 @@ export interface IStakeVault extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
+  admin(overrides?: CallOverrides): Promise<string>;
+
+  stakePositionData(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      boolean
+    ]
+  >;
+
+  usersBonus(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
 
   callStatic: {
     _deposit(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -138,7 +247,28 @@ export interface IStakeVault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+    admin(overrides?: CallOverrides): Promise<string>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean
+      ]
+    >;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber, BigNumber, BigNumber, boolean]>;
   };
 
   filters: {};
@@ -151,6 +281,16 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     _withdraw(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -159,7 +299,17 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
+    admin(overrides?: CallOverrides): Promise<BigNumber>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -170,6 +320,16 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    _updateUserBonus(
+      _user: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _bonusAmount: PromiseOrValue<BigNumberish>,
+      _bonusCreated: PromiseOrValue<BigNumberish>,
+      _stakingDeposits: PromiseOrValue<BigNumberish>,
+      _referralBonus: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     _withdraw(
       _user: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -178,6 +338,16 @@ export interface IStakeVault extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    admin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    stakePositionData(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    usersBonus(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
   };
 }
